@@ -1,0 +1,134 @@
+<style>
+        /* Optional: Add some custom spacing if needed, Bootstrap utilities are often enough */
+        .task-item {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+        }
+        .task-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Space between elements in the header */
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+        }
+        .task-header input[type="text"],
+        .task-header input[type="date"] {
+            flex-grow: 1; /* Allow inputs to take up available space */
+            min-width: 150px; /* Ensure inputs don't get too small */
+        }
+        .task-options {
+            margin-bottom: 0.5rem;
+        }
+        .subtask-list {
+            padding-left: 1.5rem; /* Indent subtasks */
+            border-left: 2px solid #0d6efd; /* Visual cue for subtasks */
+            margin-top: 1rem;
+        }
+    </style>
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Tasks
+{% endblock %}
+
+
+{% block main %}
+    <div class="container mt-5">
+        <h1 class="mb-4">My Tasks</h1>
+        <form id="task-manager-form" action="/save-tasks" method="POST">
+            <div class="task-list">
+                <div class="card mb-3" data-task-id="1">
+                    <div class="card-body">
+                        <div class="task-header">
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" class="form-control" id="task_name_1" name="task_name_1" value="Plan Website" placeholder="Task Name">
+                                <label for="task_name_1">Task Name</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="date" class="form-control" id="due_date_1" name="due_date_1" value="2025-07-30" placeholder="Due Date">
+                                <label for="due_date_1">Due Date</label>
+                            </div>
+                            <button type="button" class="btn btn-primary add-subtask-btn">Add Subtask</button>
+                            <button type="button" class="btn btn-danger delete-task-btn">Delete</button>
+                        </div>
+                        <div class="task-options mb-3">
+                            <div class="form-floating mb-2">
+                                <textarea class="form-control" placeholder="Task Description" id="description_1" name="description_1" style="height: 100px;">Outline key features.</textarea>
+                                <label for="description_1">Description</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="completed_1" name="completed_1">
+                                <label class="form-check-label" for="completed_1">Completed</label>
+                            </div>
+                        </div>
+                        <div class="subtask-list">
+                            <div class="card card-body bg-light mb-2" data-task-id="1.1">
+                                <div class="task-header">
+                                    <div class="form-floating flex-grow-1">
+                                        <input type="text" class="form-control" id="task_name_1_1" name="task_name_1_1" value="Define Scope" placeholder="Subtask Name">
+                                        <label for="task_name_1_1">Subtask Name</label>
+                                    </div>
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="due_date_1_1" name="due_date_1_1" value="2025-07-05" placeholder="Due Date">
+                                        <label for="due_date_1_1">Due Date</label>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn">Add Subtask</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn">Delete</button>
+                                </div>
+                            </div>
+                            <div class="card card-body bg-light mb-2" data-task-id="1.2">
+                                <div class="task-header">
+                                    <div class="form-floating flex-grow-1">
+                                        <input type="text" class="form-control" id="task_name_1_2" name="task_name_1_2" value="Research Frameworks" placeholder="Subtask Name">
+                                        <label for="task_name_1_2">Subtask Name</label>
+                                    </div>
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="due_date_1_2" name="due_date_1_2" value="2025-07-10" placeholder="Due Date">
+                                        <label for="due_date_1_2">Due Date</label>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn">Add Subtask</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn">Delete</button>
+                                </div>
+                                <div class="subtask-list">
+                                    <div class="card card-body bg-light mb-2" data-task-id="1.2.1">
+                                        <div class="task-header">
+                                            <div class="form-floating flex-grow-1">
+                                                <input type="text" class="form-control" id="task_name_1_2_1" name="task_name_1_2_1" value="Flask vs Django" placeholder="Sub-subtask Name">
+                                                <label for="task_name_1_2_1">Sub-subtask Name</label>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn">Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3" data-task-id="2">
+                    <div class="card-body">
+                        <div class="task-header">
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" class="form-control" id="task_name_2" name="task_name_2" value="Set Up Database" placeholder="Task Name">
+                                <label for="task_name_2">Task Name</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="date" class="form-control" id="due_date_2" name="due_date_2" value="2025-07-15" placeholder="Due Date">
+                                <label for="due_date_2">Due Date</label>
+                            </div>
+                            <button type="button" class="btn btn-primary add-subtask-btn">Add Subtask</button>
+                            <button type="button" class="btn btn-danger delete-task-btn">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">Save All Tasks</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+{% endblock %}
