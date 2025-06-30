@@ -12,6 +12,7 @@
 
 
 <form action="/newProject" method="post">
+    
     <div class="mb-3 row">
         
         <label for="projectTitle" class="col-sm-2 col-form-label offset-sm-1">Title:</label>
@@ -30,6 +31,27 @@
         <div class="col-sm-8">
             <input autocomplete="off" class="form-control"
             name="description" placeholder="Describe what your project is about!" type="text" id="projectTitle" required>
+        </div>
+
+    </div>
+
+    <div class="mb-3 row ">
+        
+        <label for="start_date" class="col-sm-2 col-form-label offset-sm-1">Start Date:</label>
+        
+        <div class="col-sm-8">
+            <input type="date" class="form-control" id="start_date" name="start_date" style="max-width:250px;">
+        </div>
+
+    </div>
+
+
+    <div class="mb-3 row ">
+        
+        <label for="end_date" class="col-sm-2 col-form-label offset-sm-1">Due Date:</label>
+        
+        <div class="col-sm-8">
+            <input type="date" class="form-control" id="end_date" name="end_date" style="max-width:250px;">
         </div>
 
     </div>

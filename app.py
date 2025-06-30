@@ -112,56 +112,73 @@ def projects():
     return redirect("/projects")
 
 
-@app.route("/account", methods=["GET", "POST"])
+@app.route("/account", methods=["GET"])
 @login_required
 def account():
     """Modify account settings"""
 
-    if request.method == "GET":
-        return render_template("account.html")
+    user_id = session["user_id"]
 
-    elif request.method == "POST":
-        user_id = session["user_id"]
-        current_password = request.form.get("current_password") # Changed to current_password
-        new_password = request.form.get("new_password")
-        confirmation = request.form.get("confirmation")
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""SELECT username 
+                    FROM users
+                    WHERE user_id = ?""", (user_id,))
 
-        if not current_password or not new_password or not confirmation:
-            return error_page("All password fields must be filled.", 400)
+    username = cursor.fetchone()
+    return render_template("account.html", username=username[0])
 
-        if new_password != confirmation:
-            return error_page("New password and confirmation do not match.", 400)
-        
-        if new_password == current_password:
+
+@app.route("/reset_password", methods=["POST"])
+@login_required
+def reset_password():
+
+    user_id = session["user_id"]
+    current_password = request.form.get("current_password") 
+    new_password = request.form.get("new_password")
+    confirmation = request.form.get("confirmation")
+
+    print(current_password, new_password, confirmation,"\n\n\n\n\n\n")
+
+    if not current_password or not new_password or not confirmation:
+        return error_page("All password fields must be filled.", 400)
+
+    if new_password != confirmation:
+        return error_page("New password and confirmation do not match.", 400)
+    
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""SELECT password_hash 
+                        FROM users 
+                        WHERE user_id = ?""", (user_id,))
+
+    user_hash_record = cursor.fetchone()
+    if user_hash_record is None:
+        return error_page("User not found.", 404) # Should not happen if login_required works
+
+    stored_hash = user_hash_record["password_hash"]
+
+    if check_password_hash(stored_hash, current_password):
+
+        if check_password_hash(stored_hash, new_password):
             return error_page("New password cannot be the same as current password.", 400)
+        
+        # Generate new hash for the new password
+        new_hashed_password = generate_password_hash(new_password, method='scrypt', salt_length=16)
 
-        conn = get_db() # Assuming users table is in finance.db for password reset
-        cursor = conn.cursor()
+        cursor.execute("""UPDATE users 
+                            SET password_hash = ? 
+                            WHERE user_id = ?""", (new_hashed_password, user_id))
 
-        cursor.execute("""SELECT hash 
-                          FROM users 
-                          WHERE id = ?""", (user_id,))
+        conn.commit() 
+        flash("Password changed successfully!") # Flash message for success
+        return redirect("/")
 
-        user_hash_record = cursor.fetchone()
-        if user_hash_record is None:
-            return error_page("User not found.", 404) # Should not happen if login_required works
+    else:
+        return error_page("Incorrect current password.")
 
-        stored_hash = user_hash_record["hash"]
-
-        if check_password_hash(stored_hash, current_password):
-            # Generate new hash for the new password
-            new_hashed_password = generate_password_hash(new_password, method='scrypt', salt_length=16)
-            
-            cursor.execute("""UPDATE users 
-                             SET hash = ? 
-                             WHERE id = ?""", (new_hashed_password, user_id))
-
-            conn.commit() 
-            flash("Password changed successfully!") # Flash message for success
-            return redirect("/")
-
-        else:
-            return error_page("Incorrect current password.")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -203,9 +220,6 @@ def login():
         session["user_id"] = rows[0]["user_id"] # Ensure this matches your DB column name (e.g., 'id' or 'user_id')
     
         # Redirect user to home page
-        
-        # No commit needed for SELECT operations
-        # conn.commit() 
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -295,6 +309,8 @@ def newProject():
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
+        start_date = request.form.get("start_date")
+        due_date = request.form.get("end_date")
         user_id = session["user_id"] 
 
         if not title: # More Pythonic check for empty string
@@ -303,23 +319,23 @@ def newProject():
         if not description: # More Pythonic check for empty string
             return error_page("No description entered.", 400)
 
+
         conn = get_db()
         cursor = conn.cursor()
 
         try:
-            # TODO: check for projects with the same name, don't let this project be created if so.
+
             cursor.execute("""SELECT project_id FROM projects WHERE user_id = ? AND name = ?""", (user_id, title))
             if cursor.fetchone():
                 return error_page("You already have a project with this name.", 400)
 
             # Create new project in projects table
-            cursor.execute("""INSERT INTO projects
-                             (user_id, name, description)
-                             VALUES (?, ?, ?)""", (user_id, title, description))
             
+            cursor.execute("""INSERT INTO projects
+                            (user_id, name, description, end_date, start_date)
+                            VALUES (?, ?, ?, ?, ?)""", (user_id, title, description, due_date, start_date))
+
             # Get the project_id of the newly inserted project
-            # Using lastrowid is more reliable than querying back by name/description,
-            # especially if multiple users could create projects with same name/description
             project_id = cursor.lastrowid 
 
             # Insert the main project as a top-level work_item associated with the project
@@ -342,7 +358,7 @@ def newProject():
 
 @app.route("/projects/<int:project_id>/edit", methods=["GET","POST"]) # Renamed route for clarity
 @login_required
-def edit_project(project_id): # Renamed function to reflect broader project editing
+def edit_project(project_id):
     """Edit project title and potentially other details."""
     user_id = session["user_id"]
     conn = get_db()

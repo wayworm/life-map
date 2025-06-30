@@ -5,13 +5,26 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/account" method="POST">
-        <div class="mb-3">
-            <div class="mb-3"><label id="reset_label"> Reset Password </label></div>
-            
-            <div class="mb-3"><input autocomplete="off" required autofocus class="form-control mx-auto w-auto" name="password" placeholder="Current Password" type="password"></div>
-            <input autocomplete="off" required class="form-control mx-auto w-auto" name="new_password" placeholder="New Password" type="password">
-        </div>
-        <button class="btn btn-primary" type="submit">Reset</button>
-    </form>
+    <div class="bg-light shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 400px; width: 100%;">
+        <form action="/change_username" method="POST">
+            <div class="mb-4">
+                <div class="mb-3"><label id="reset_label"> Change Username </label></div>
+
+                <div class="mb-3"><input autocomplete="off" required autofocus class="form-control mx-auto w-auto" name="username" placeholder="{{ username }}" type="username"></div>
+            </div>
+                <button class="btn btn-primary" type="submit">Change</button>
+        </form>
+
+        <form action="/reset_password" method="POST">
+            <div class="mb-4">
+                <div class="mb-3"><label id="reset_label"> Reset Password </label></div>
+                
+                <div class="mb-2"><input autocomplete="off" required autofocus class="form-control mx-auto w-auto" name="current_password" placeholder="Current Password" type="password"></div>
+                <div class="mb-2"><input autocomplete="off" required class="form-control mx-auto w-auto" name="new_password" placeholder="New Password" type="password"></div>
+                <div class="mb-2"><input autocomplete="off" required class="form-control mx-auto w-auto" name="confirmation" placeholder="Retype new password" type="password"></div>
+
+            </div>
+            <button class="btn btn-primary" type="submit">Reset</button>
+        </form>
+    </div>
 {% endblock %}
