@@ -6,8 +6,6 @@ import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-
-
 # Configure application
 app = Flask(__name__)
 
@@ -17,9 +15,9 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 def error_page(message, code=400):
-    """Render message as an apology to user."""
+    """Render error page to user."""
 
-    return render_template("apology.html", code=code, message=message), code
+    return render_template("error_page.html", code=code, message=message), code
 
 # Configure database
 def get_db():
@@ -27,12 +25,6 @@ def get_db():
         g.lifemap_db = sqlite3.connect("LifeMap.db")
         g.lifemap_db.row_factory = sqlite3.Row # This will allow you to access columns by name
     return g.lifemap_db
-
-
-def apology(message, code=400):
-    """Render message as an apology to user."""
-
-    return render_template("apology.html", code=code, message=message), code
 
 
 def login_required(f):
@@ -82,18 +74,18 @@ def build_task_tree(tasks_flat_list):
     tree = [] # This will hold the top-level tasks
 
     # Iterate over all tasks to initialize subtasks list and build hierarchy
-    for task_id, task in task_map.items():
+    for task in task_map.items():
         # Ensure 'subtasks' list exists for all tasks, even if empty
         task['subtasks'] = []
 
-        # Check if it's a subtask (has a parent_item_id)
+        # Check if subtask
         if task['parent_item_id'] is not None:
             parent_id = task['parent_item_id']
+
             # If the parent exists in our map, add this task to its subtasks
             if parent_id in task_map:
                 task_map[parent_id]['subtasks'].append(task)
-            # else: Handle orphaned subtasks if necessary, e.g., add to top-level or log
-            #     tree.append(task)
+
         else:
             # It's a top-level task
             tree.append(task)
@@ -144,6 +136,7 @@ def account():
     user_id = session["user_id"]
 
     conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
     cursor.execute("""SELECT username 
                     FROM users
@@ -172,6 +165,7 @@ def reset_password():
     
 
     conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     cursor.execute("""SELECT password_hash 
@@ -223,6 +217,7 @@ def login():
             return error_page("must provide password", 403)
 
         conn = get_db() # Using LifeMap.db for login
+        conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
 
         username_to_query = request.form.get("username")
@@ -293,6 +288,7 @@ def register():
 
 
         conn = get_db() # Using LifeMap.db for user registration
+        conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
 
         try:
@@ -345,6 +341,7 @@ def newProject():
 
 
         conn = get_db()
+        conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
 
         try:
@@ -386,6 +383,7 @@ def edit_project(project_id):
     """Edit project title and potentially other details."""
     user_id = session["user_id"]
     conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     if request.method == "GET":
@@ -445,6 +443,7 @@ def tasks(project_id):
 
     user_id = session["user_id"]
     conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     # Fetch project details and verify ownership
@@ -483,6 +482,7 @@ def projects_list():
 
     if request.method == "GET":
         conn = get_db()
+        conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
         user_id = session["user_id"]
 
@@ -497,16 +497,10 @@ def projects_list():
         for row in rows:
             rows_list.append(dict(row)) # Convert each Row object to a dict
 
-        # No commit needed for SELECT operations
-        # conn.commit() 
-
-
-        print(rows_list,"\n\n\n\n\n\n\n")
-
         return render_template("projects.html", projects=rows_list) # Renamed 'rows' to 'projects' for clarity
 
     else:
-        return error_page("You shouldn't have done that.") # More descriptive apology
+        return error_page("Request Error, Only GET requests accepted.", 403 ) 
 
 
 @app.route("/save-tasks", methods=["POST"])
@@ -514,6 +508,7 @@ def projects_list():
 def save_tasks():
     user_id = session["user_id"]
     conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     try:
@@ -610,6 +605,7 @@ def save_tasks():
 
 
         conn = get_db()
+        conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
 
         # SQL query to update top-level work_items names to match their project name
@@ -631,11 +627,6 @@ def save_tasks():
         cursor.execute(update_query)
 
         conn.commit() # Commit all inserts/updates
-        conn.close()
-
-
-
-
 
         return jsonify({"message": "Tasks saved successfully!", "new_ids_map": id_map}), 200
 
@@ -643,8 +634,6 @@ def save_tasks():
         conn.rollback() # Rollback in case of error
         print(f"Error saving tasks: {e}")
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-    finally:
-        conn.close() # Ensure connection is closed
 
 
 if __name__ == '__main__':

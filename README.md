@@ -92,9 +92,8 @@ cd LifeMap
 Install Python dependencies located in the requirements.txt
 
 Initialize the Database:
-The application will automatically create LifeMap.db and necessary tables on its first run if they don't exist. You may need to manually create the schema for users, projects, and work_items tables.
 
-Example Schema (to be created manually or via an initial migration script):
+The project contains the database file, here is the schema used within:
 
 -- users table
 CREATE TABLE IF NOT EXISTS users (
@@ -135,7 +134,6 @@ CREATE TABLE IF NOT EXISTS work_items (
     FOREIGN KEY (assigned_to_user_id) REFERENCES users (user_id)
 );
 
-Note: The ON DELETE CASCADE clauses in work_items table are crucial for automatically deleting subtasks when a parent task or project is deleted. Ensure your CREATE TABLE statements include these if you want this behavior.
 
 Run the application:
 
@@ -148,20 +146,19 @@ Project Structure
 
 .
 ├── app.py                  # Main Flask application file
-├── helpers.py              # (Missing) Placeholder for login_required decorator
-├── LifeMap.db              # SQLite database file (generated on run)
-├── static/                 # Static assets (CSS, JS, images - if any)
+├── LifeMap.db              # SQLite database file
+├── static/                 # Static assets
 │   └── ...
-└── templates/              # HTML templates (Jinja2)
-├── account.html        # Account management page
-├── apology.html        # Error display page
-├── editProject.html    # Edit project details page
-├── layout.html         # Base template for all pages (header, footer, common styles)
-├── login.html          # User login page
-├── newProject.html     # Create new project page
-├── projects.html       # List of user's projects
-├── register.html       # User registration page
-└── tasks v4.html       # Project-specific task management page
+└── templates/              # HTML templates using Jinja2
+├── account.html                # Account management page
+├── error_page.html             # Error display page
+├── editProject.html            # Edit project details page
+├── layout.html                 # Base template for all pages (header, footer, common styles)
+├── login.html                  # User login page
+├── newProject.html             # Create new project page
+├── projects.html               # List of user's projects
+├── register.html               # User registration page
+└── tasks v4.html               # Project-specific task management page
 
 Usage
 
@@ -189,18 +186,4 @@ Task Management:
 
 Potential Improvements and Known Issues
 
-Missing helpers.py: The login_required decorator's implementation is not provided. Its correct functionality is assumed.
-
 Database Schema Management: No formal database migration system (e.g., Flask-Migrate) is in place. Schema changes require manual CREATE TABLE or ALTER TABLE statements.
-
-Error Handling Detail: Error messages returned to the user (e.g., from register or newProject) can be verbose. Production environments require more generic error messages to prevent information leakage.
-
-Client-Side ID Refresh: After saving tasks, the entire page reloads to synchronize client-side temporary IDs with database IDs. A more efficient approach would be to update DOM elements dynamically using the new_ids_map returned by the backend.
-
-Parent-Child Completion Logic: While propagation downwards and upwards is implemented, complex scenarios (e.g., unchecking a parent when only some children are unchecked) may require further refinement for complete consistency.
-
-No "Planned Hours" Save Logic: The planned_hours input field is present in tasks v4.html but its value is not collected or saved in the save_tasks endpoint in app.py.
-
-Project Name Update in work_items: The edit_project route's update for the top-level work_item name relies on the AND name = (SELECT name FROM projects WHERE project_id = ?) clause. This means the top-level task name will only update if it still matches the old project name. It should update unconditionally for the parent_item_id IS NULL work item linked to that project_id.
-
-Database Connection Closing: The conn.close() in save_tasks's finally block is redundant if app.teardown_appcontext is properly configured to close the database connection at the end of each request. This can cause issues.
