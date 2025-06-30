@@ -1,9 +1,11 @@
-import sqlite3
 from flask import Flask, flash, redirect, render_template, request, session, g, jsonify 
 from flask_session import Session
-from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required
+from functools import wraps
 import traceback
+import sqlite3
+from werkzeug.security import check_password_hash, generate_password_hash
+
+
 
 
 # Configure application
@@ -25,6 +27,28 @@ def get_db():
         g.lifemap_db = sqlite3.connect("LifeMap.db")
         g.lifemap_db.row_factory = sqlite3.Row # This will allow you to access columns by name
     return g.lifemap_db
+
+
+def apology(message, code=400):
+    """Render message as an apology to user."""
+
+    return render_template("apology.html", code=code, message=message), code
+
+
+def login_required(f):
+    """
+    Decorate routes to require login.
+
+    https://flask.palletsprojects.com/en/latest/patterns/viewdecorators/
+    """
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect("/login")
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 def build_task_tree(tasks_flat_list):
