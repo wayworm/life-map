@@ -4,6 +4,10 @@
     Account
 {% endblock %}
 
+{% block username %}
+    Hi, {{ username}}
+{% endblock %}
+
 {% block main %}
     <div class="bg-light shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 400px; width: 100%;">
         <form action="/change_username" method="POST">

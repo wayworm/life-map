@@ -74,9 +74,9 @@ def build_task_tree(tasks_flat_list):
     tree = [] # This will hold the top-level tasks
 
     # Iterate over all tasks to initialize subtasks list and build hierarchy
-    for task in task_map.items():
+    for taskid, task in task_map.items():
         # Ensure 'subtasks' list exists for all tasks, even if empty
-        task['subtasks'] = []
+        task['subtasks'] = []   
 
         # Check if subtask
         if task['parent_item_id'] is not None:
@@ -105,6 +105,20 @@ def build_task_tree(tasks_flat_list):
     return tree
 
 
+def get_username(user_id):
+    conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
+    cursor = conn.cursor()
+
+    cursor.execute("""SELECT username
+                          FROM users
+                          WHERE user_id = ?""", (user_id,)) 
+    
+    username = cursor.fetchone()
+    close_db()
+
+    return username[0]
+
 @app.teardown_appcontext
 def close_db(e=None):
     # Close lifemap_db if it exists
@@ -124,7 +138,7 @@ def after_request(response):
 
 @app.route("/")
 @login_required
-def projects():
+def index():
     return redirect("/projects")
 
 
@@ -134,16 +148,29 @@ def account():
     """Modify account settings"""
 
     user_id = session["user_id"]
+    return render_template("account.html", username=get_username(user_id))
+
+
+@app.route("/change_username", methods=["POST"])
+@login_required
+def change_username():
+
+    user_id = session["user_id"]
+    new_username = request.form.get("username") 
+
+    if not new_username:
+        return error_page("NO new username entered", 400)
 
     conn = get_db()
     conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
-    cursor.execute("""SELECT username 
-                    FROM users
-                    WHERE user_id = ?""", (user_id,))
 
-    username = cursor.fetchone()
-    return render_template("account.html", username=username[0])
+    cursor.execute("""UPDATE users 
+                        SET username = ? 
+                        WHERE user_id = ?""", (new_username, user_id))
+    
+    conn.commit()
+    return redirect("/")
 
 
 @app.route("/reset_password", methods=["POST"])
@@ -154,8 +181,6 @@ def reset_password():
     current_password = request.form.get("current_password") 
     new_password = request.form.get("new_password")
     confirmation = request.form.get("confirmation")
-
-    print(current_password, new_password, confirmation,"\n\n\n\n\n\n")
 
     if not current_password or not new_password or not confirmation:
         return error_page("All password fields must be filled.", 400)
@@ -325,6 +350,8 @@ def register():
 @login_required
 def newProject():
     """Add new Project to database"""
+    
+    user_id = session["user_id"]
 
     if request.method == "POST":
         title = request.form.get("title")
@@ -374,7 +401,7 @@ def newProject():
             return error_page(f"Error creating project: {e}")
 
     else:
-        return render_template("newProject.html")
+        return render_template("newProject.html", username=get_username(user_id))
     
 
 @app.route("/projects/<int:project_id>/edit", methods=["GET","POST"]) # Renamed route for clarity
@@ -396,7 +423,7 @@ def edit_project(project_id):
         if project is None:
             return error_page("Project not found or you don't have permission to edit.", 404)
 
-        return render_template("editProject.html", current_project=dict(project), project_id=project_id) # Pass project_id for JS
+        return render_template("editProject.html", current_project=dict(project), project_id=project_id, username=get_username(user_id)) # Pass project_id for JS
 
     elif request.method == "POST":
         new_title = request.form.get("projectTitle") # Get new title from form
@@ -472,7 +499,7 @@ def tasks(project_id):
     tasks = cursor.fetchall()
     tree = build_task_tree(tasks) # Build the hierarchical tree
 
-    return render_template('tasks v4.html', tasks=tree, project_id=project_id, project_name=project_name)
+    return render_template('tasks v4.html', tasks=tree, project_id=project_id, project_name=project_name, username=get_username(user_id))
 
 
 @app.route("/projects", methods=["GET","POST"])
@@ -497,10 +524,11 @@ def projects_list():
         for row in rows:
             rows_list.append(dict(row)) # Convert each Row object to a dict
 
-        return render_template("projects.html", projects=rows_list) # Renamed 'rows' to 'projects' for clarity
+        return render_template("projects.html", projects=rows_list, username=get_username(user_id)) # Renamed 'rows' to 'projects' for clarity
 
     else:
         return error_page("Request Error, Only GET requests accepted.", 403 ) 
+
 
 
 @app.route("/save-tasks", methods=["POST"])
