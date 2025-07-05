@@ -580,7 +580,8 @@ def tasks(project_id):
         tasks=tree,
         project_id=project_id,
         project_name=project_name,
-        username=get_username(user_id))
+        username=get_username(user_id),
+        project_details=project_details)
 
 
 @app.route("/projects", methods=["GET", "POST"])

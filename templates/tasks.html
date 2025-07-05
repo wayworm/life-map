@@ -243,7 +243,7 @@
 {% block main %}
 
     <div class="container-fluid mt-5">
-        <form id="task-manager-form" method="POST"> 
+        <form id="task-manager-form" method="POST">
             <input type="hidden" id="project_id" name="project_id" value="{{ project_id }}"> {# Hidden input to pass project_id #}
             <div class="task-list">
 
@@ -257,8 +257,10 @@
                                         <label for="task_name_{{ task.id | replace('.', '_') }}">Subtask Name</label>
                                     </div>
                                 {% else %}
+                                    {# This is the main project task. Its name is static here. #}
                                     <h2 class="flex-grow-1 mb-0 fs-15 fw-bold">{{ project_name }}</h2>
-                                    <input type="hidden" name="task_name_{{ task.id | replace('.', '_') }}" value="{{ task.name }}"> {# Necessary? #}
+                                    {# The hidden input for the name is likely not necessary as it's not editable here #}
+                                    {# <input type="hidden" name="task_name_{{ task.id | replace('.', '_') }}" value="{{ task.name }}"> #}
                                 {% endif %}
 
 
@@ -269,20 +271,20 @@
                                     <label for="planned_hours_{{ task.id | replace('.', '_') }}" class="form-label small mb-1">Planned Hours</label>
                                     <input type="number" min="0" step="0.1" class="form-control form-control-sm" id="planned_hours_{{ task.id | replace('.', '_') }}" name="planned_hours_{{ task.id | replace('.', '_') }}" value="{{ task.planned_hours if task.planned_hours is defined else '' }}" placeholder="Hours">
                                 </div>
-                                
+
                                 {% if task.due_date is defined %}
                                 <div class="form-floating">
                                     <input type="date" class="form-control" id="due_date_{{ task.id | replace('.', '_') }}" name="due_date_{{ task.id | replace('.', '_') }}" value="{{ task.due_date }}" placeholder="Due Date">
                                     <label for="due_date_{{ task.id | replace('.', '_') }}">Due Date</label>
                                 </div>
                                 {% endif %}
-                                
-                                
+
+
                                     <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 {% endif %}
-                                
+
 
                                 {# Subtask Minimisation Button #}
                                 {% if level > 0 %}
@@ -298,11 +300,12 @@
                                 {% endif %}
                             </div>
 
+                            {# Conditional rendering for task options based on level #}
                             {% if level > 0 %}
                                 <div class="task-options mb-1">
                                     <div class="form-floating mb-2">
                                         <textarea class="form-control" placeholder="Description" id="description_{{ task.id | replace('.', '_') }}" name="description_{{ task.id | replace('.', '_') }}" style="height: 100px;">{{ task.description }}</textarea>
-                                        <label for="description_{{ task.id | replace('.', '_') }}">{{ "Project Description" if level == 0 else "Description" }}</label>
+                                        <label for="description_{{ task.id | replace('.', '_') }}">Description</label>
                                     </div>
                                     <div class="form-check mb-2">
                                         <input type="checkbox" class="form-check-input completed-checkbox" id="completed_{{ task.id | replace('.', '_') }}" name="completed_{{ task.id | replace('.', '_') }}" {% if task.completed %}checked{% endif %}>
@@ -310,9 +313,11 @@
                                     </div>
                                 </div>
                             {% else %}
-                                <div class="task-options mb-1 mx-auto fs-6 fs-6 fw-bold i">
-                                   "{{ task.description }}"
+                                {# For level 0, display the project description (which comes from the 'project_details' variable) #}
+                                <div class="task-options mb-1 mx-auto fs-6 fw-bold i">
+                                   "{{ project_details.description }}" {# Use project_details.description here #}
                                 </div>
+                                {# Removed editable fields for level 0 task here to avoid confusion #}
                             {%endif %}
 
 
@@ -324,7 +329,7 @@
                                 {% endfor %}
                             </div>
                             {% endif %}
-                            
+
                             {% if level == 0 %}
                                 <div class="d-flex justify-content-center mt-3">
                                     <button type="button" class="btn btn-primary add-subtask-btn px-4">
@@ -358,7 +363,7 @@
             /**
              * Generates a new unique temporary ID for a task or subtask.
              * These are client-side IDs, not database IDs.
-             * @returns {string} A unique temporary task ID (e.g., "new-1", "new-2").
+             * @returns {string} A unique temporary task ID (e.e., "new-1", "new-2").
              */
             function generateNewTemporaryTaskId() {
                 return `new-${++newTaskIdCounter}`;
@@ -371,8 +376,8 @@
              * @param {number} level - The nesting level of the task (0 for main, 1 for subtask, etc.).
              * @returns {string} The HTML string for the task item.
              */
-            function generateTaskHtml(taskId, parentTaskId, level) { 
-                
+            function generateTaskHtml(taskId, parentTaskId, level) {
+
                 // Replace dots or hyphens in ID for HTML element IDs
                 const htmlId = taskId.replace(/[.-]/g, '_');
                 const cardClass = `subtask-level-${level}`;
@@ -383,6 +388,11 @@
                 let addSubtaskButtonInFooter = '';
                 let descriptionLabel = '';
                 let minimizeButtonHtml = '';
+                let dueDateFieldHtml = ''; // Initialize here
+                let plannedHoursFieldHtml = ''; // Initialize here
+                let descriptionFieldHtml = ''; // Initialize here
+                let completedCheckboxHtml = ''; // Initialize here
+
                 if (level > 0) {
                     taskNameAndInputHtml = `
                         <div class="form-floating flex-grow-1">
@@ -390,13 +400,37 @@
                             <label for="task_name_${htmlId}">Subtask Name</label>
                         </div>
                     `;
+                    plannedHoursFieldHtml = `
+                        <div class="mb-2" style="max-width: 120px;">
+                            <label for="planned_hours_${htmlId}" class="form-label small mb-1">Planned Hours</label>
+                            <input type="number" min="0" step="0.1" class="form-control form-control-sm" id="planned_hours_${htmlId}" name="planned_hours_${htmlId}" value="" placeholder="Hours">
+                        </div>
+                    `;
+                    dueDateFieldHtml = `
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="due_date_${htmlId}" name="due_date_${htmlId}" value="" placeholder="Due Date">
+                            <label for="due_date_${htmlId}">Due Date</label>
+                        </div>
+                    `;
                     addSubtaskButtonInHeader = `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>`;
                     deleteButtonHtml = `<button type="button" class="btn btn-sm btn-outline-danger delete-task-btn"><i class="fa-solid fa-trash"></i></button>`;
                     descriptionLabel = 'Description';
+                    descriptionFieldHtml = `
+                        <div class="form-floating mb-2">
+                            <textarea class="form-control" placeholder="${descriptionLabel}" id="description_${htmlId}" name="description_${htmlId}" style="height: 100px;"></textarea>
+                            <label for="description_${htmlId}">${descriptionLabel}</label>
+                        </div>
+                    `;
+                    completedCheckboxHtml = `
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input completed-checkbox" id="completed_${htmlId}" name="completed_${htmlId}">
+                            <label class="form-check-label" for="completed_${htmlId}">Completed</label>
+                        </div>
+                    `;
                 } else {
                     taskNameAndInputHtml = `
-                        <h4 class="flex-grow-1 mb-0">New Project/Task</h4>
-                        <input type="hidden" id="task_name_${htmlId}" name="task_name_${htmlId}" value="">
+                        <h2 class="flex-grow-1 mb-0 fs-15 fw-bold">{{ project_name }}</h2>
+                        {# We explicitly don't provide an editable description field for level 0 here #}
                     `;
                     addSubtaskButtonInFooter = `
                                 <div class="d-flex justify-content-center mt-3">
@@ -405,37 +439,27 @@
                                     </button>
                                 </div>
                     `;
-                    descriptionLabel = 'Project Description';
+                    // For level 0, the description is displayed from project_details.description and not editable here.
+                    descriptionFieldHtml = `<div class="task-options mb-1 mx-auto fs-6 fw-bold i">{{ project_details.description }}</div>`;
                 }
 
-                // Minimize/Maximize button logic (always present for tasks that can have subtasks)
+                // Minimize/Maximize button logic (always present for tasks that can have subtasks, i.e., level > 0)
                 // Default to expanded state (down arrow)
-                minimizeButtonHtml = `
-                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn">
-                        <span class="collapse-icon">&#9660;</span>
-                    </button>
-                `;
+                if (level > 0) { // Only subtasks can be minimized/maximized
+                    minimizeButtonHtml = `
+                        <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn">
+                            <span class="collapse-icon">&#9660;</span>
+                        </button>
+                    `;
+                }
 
-
-                const dueDateFieldHtml = `
-                    <div class="form-floating">
-                        <input type="date" class="form-control" id="due_date_${htmlId}" name="due_date_${htmlId}" value="" placeholder="Due Date">
-                        <label for="due_date_${htmlId}">Due Date</label>
-                    </div>
-                `;
-
-                const descriptionFieldHtml = `
-                    <div class="form-floating mb-2">
-                        <textarea class="form-control" placeholder="${descriptionLabel}" id="description_${htmlId}" name="description_${htmlId}" style="height: 100px;"></textarea>
-                        <label for="description_${htmlId}">${descriptionLabel}</label>
-                    </div>
-                `;
 
                 return `
                     <div class="card ${cardClass} mb-1" data-task-id="${taskId}" data-parent-task-id="${parentTaskId || ''}" data-level="${level}">
                         <div class="card-body">
                             <div class="task-header">
                                 ${taskNameAndInputHtml}
+                                ${plannedHoursFieldHtml}
                                 ${dueDateFieldHtml}
                                 ${addSubtaskButtonInHeader}
                                 ${minimizeButtonHtml}
@@ -443,14 +467,10 @@
                             </div>
                             <div class="task-options mb-1">
                                 ${descriptionFieldHtml}
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input completed-checkbox" id="completed_${htmlId}" name="completed_${htmlId}">
-                                    <label class="form-check-label" for="completed_${htmlId}">Completed</label>
-                                </div>
+                                ${completedCheckboxHtml}
                             </div>
                             <div class="subtask-list">
-                                <!-- Subtasks will be appended here -->
-                            </div>
+                                </div>
                             ${addSubtaskButtonInFooter}
                         </div>
                     </div>
@@ -696,24 +716,34 @@
                     const level = parseInt(card.dataset.level || '0', 10); // Get level from data attribute
 
                     let taskName;
-                    if (level === 0) {
-                        // For level 0, the task name is displayed in the h4 and captured from the hidden input.
-                        const h4Element = card.querySelector('.task-header h4');
-                        const hiddenInput = card.querySelector(`input[name="task_name_${taskId.replace(/[.-]/g, '_')}"][type="hidden"]`);
-                        taskName = h4Element ? h4Element.textContent : (hiddenInput ? hiddenInput.value : '');
-                    } else {
-                        // For subtasks (level > 0), get from the visible text input
-                        taskName = card.querySelector('input[type="text"]').value;
-                    }
+                    let description;
+                    let dueDate;
+                    let completed;
+                    let plannedHours; // Added plannedHours
 
-                    const description = card.querySelector('textarea').value;
-                    const dueDate = card.querySelector('input[type="date"]').value;
-                    const completed = card.querySelector('input[type="checkbox"]').checked;
+                    if (level === 0) {
+                        // For level 0, the task name is displayed in the h2.
+                        taskName = card.querySelector('.task-header h2').textContent;
+                        // For level 0, description, due_date, completed, and planned_hours are not editable or managed via this form,
+                        // so we don't try to read them from inputs. They are read from the initial project_details.
+                        description = card.querySelector('.task-options.mb-1.mx-auto.fs-6.fw-bold.i').textContent.trim().replace(/^"|"$/g, '');
+                        dueDate = null; // No due date input for project task here
+                        completed = false; // Project task itself is not "completed" in this sense
+                        plannedHours = null; // No planned hours input for project task here
+                    } else {
+                        // For subtasks (level > 0), get from the visible text inputs
+                        taskName = card.querySelector('input[type="text"]').value;
+                        description = card.querySelector('textarea').value;
+                        dueDate = card.querySelector('input[type="date"]').value;
+                        completed = card.querySelector('input[type="checkbox"]').checked;
+                        plannedHours = card.querySelector('input[name^="planned_hours_"]').value; // Get planned hours
+                    }
 
                     const subtaskListContainer = card.querySelector('.subtask-list');
                     const subtasks = subtaskListContainer ? collectTaskData(subtaskListContainer) : [];
 
-                    tasks.push({
+                    // Only include planned_hours if it's not the top-level task (level 0)
+                    const taskObject = {
                         id: taskId,
                         parent_id: parentTaskId,
                         name: taskName,
@@ -721,7 +751,12 @@
                         due_date: dueDate,
                         completed: completed,
                         subtasks: subtasks
-                    });
+                    };
+                    if (level > 0) {
+                        taskObject.planned_hours = plannedHours;
+                    }
+
+                    tasks.push(taskObject);
                 });
                 return tasks;
             }
@@ -732,7 +767,7 @@
                 event.preventDefault(); // Prevent default form submission
 
                 const projectId = document.getElementById('project_id').value;
-                const tasksData = collectTaskData(document.querySelector    ('.task-list'));
+                const tasksData = collectTaskData(document.querySelector('.task-list'));
 
                 const payload = {
                     project_id: projectId,
