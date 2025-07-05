@@ -9,24 +9,26 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 # TODO: Link to Google Calendar.
     # TODO: Add functionality to sort hours assigned to task
+    # TODO: Logic to disallow a subtask to have more hours attributed to it than it's parent task.
 
 # TODO: Add functionality to reorder the tasks by drag and drop.
 
+# TODO: Make nav bar stick to top of page when scrolling down.
 
-# TODO: get rid of the mapping from js to python dict keys in the build_task_tree function. Not a big problem, just unnecessary and unclean.
-# TODO: Logic to disallow a subtask to have more hours attributed to it than it's parent task.
-
-# TODO: change Edit project details menu to look like the other menus.
-# TODO: make cancel button on "rename project" screen just redirect to projects page.
-# TODO: add edit description of project to "rename" menu. No longer show an editable text box for the description on the tasks page. 
-# TODO: Add Show password checkboxes to register and log in pages 
-# TODO: Reduce size of indent for subtasks  
-# TODO: The username log-in field should also accespt e-mail and sign them in
+# TODO: Porject pages due date -->years, months, weeks, days dependings on timescale 
 
 
 # finished:
-# TODO: Add 'planned_hours' columns to work_items table DONE
-# TODO: Change subtask minimisaiton functionality. Remove the description box only, rather than whole card.
+    #: Add 'planned_hours' columns to work_items table DONE
+    #: Change subtask minimisaiton functionality. Remove the description box only, rather than whole card.
+    #: change Edit project details menu to look like the other menus.
+    #: make cancel button on "rename project" screen just redirect to projects page.
+    #: Reduce size of indent for subtasks.
+    #: The username log-in field should also accespt e-mail and sign them in.
+    #: add edit description of project to "rename" menu. No longer show an editable text box for the description on the tasks page.
+    #: Add Show password checkboxes to register and log in pages 
+ 
+
 
 
 
@@ -271,42 +273,60 @@ def login():
     # Forget any user_id
     session.clear()
 
-    # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-        # Ensure username was submitted
-        if not request.form.get("username"):
-            return error_page("must provide username", 403)
+        # Get form values
+        login_input = request.form.get("username-or-email")
+        password = request.form.get("password")
 
-        # Ensure password was submitted
-        elif not request.form.get("password"):
+        print("\n"*10)
+        print(login_input)
+        print("\n"*10)
+
+        if not login_input:
+            return error_page("must provide username or e-mail", 403)
+        if not password:
             return error_page("must provide password", 403)
 
-        conn = get_db()  # Using LifeMap.db for login
+        conn = get_db()
         conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
 
-        username_to_query = request.form.get("username")
+        # Look for a user where username or email matches
+        cursor.execute("""
+            SELECT * FROM users
+            WHERE username = ? OR email = ?
+            LIMIT 1
+        """, (login_input, login_input))
 
-        cursor.execute("""SELECT *
-                         FROM users
-                         WHERE username = ?""", (username_to_query,))
+        row = cursor.fetchone()
 
-        rows = cursor.fetchall()
+        if not row or not check_password_hash(row["password_hash"], password):
 
-        # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(
-            rows[0]["password_hash"], request.form.get("password")
-        ):
-            return error_page("invalid username and/or password", 403)
+            # Look for a user where lowercase email matches
+            lowered = login_input.lower()
 
-        # Remember which user has logged in
-        # Ensure this matches your DB column name (e.g., 'id' or 'user_id')
-        session["user_id"] = rows[0]["user_id"]
+            cursor.execute("""
+                SELECT * FROM users
+                WHERE email = ?
+                LIMIT 1
+            """, (lowered,))
 
-        # Redirect user to home page
+            row = cursor.fetchone()
+
+            if not row:
+                return error_page("invalid username and/or password", 403)
+            else:
+                # Log user in
+                session["user_id"] = row["user_id"]
+
+                return redirect("/")
+
+
+        # Log user in
+        session["user_id"] = row["user_id"]
+
         return redirect("/")
 
-    # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
 
@@ -463,6 +483,72 @@ def newProject():
            methods=["GET", "POST"])  # Renamed route for clarity
 @login_required
 def edit_project(project_id):
+    """Edit project title and potentially other details."""
+    user_id = session["user_id"]
+    conn = get_db()
+    conn.execute("PRAGMA foreign_keys = ON")
+    cursor = conn.cursor()
+
+    if request.method == "GET":
+        cursor.execute("""SELECT name, description
+                         FROM projects
+                         WHERE user_id = ? AND project_id = ?""", (user_id, project_id))
+
+        project = cursor.fetchone()
+
+        if project is None:
+            return error_page(
+                "Project not found or you don't have permission to edit.", 404)
+
+        return render_template(
+            "editProject.html",
+            current_project=dict(project),
+            project_id=project_id,
+            username=get_username(user_id))  # Pass project_id for JS
+
+    elif request.method == "POST":
+        new_title = request.form.get("projectTitle")  # Get new title from form
+        new_description = request.form.get("projectDescription") # Get new description from form
+
+        if not new_title:
+            return jsonify(
+                {"success": False, "error": "New project title cannot be empty."}), 400
+        # Optional: Add validation for new_description if needed (e.g., cannot be empty)
+
+        try:
+            # Verify project ownership before updating
+            cursor.execute(
+                "SELECT 1 FROM projects WHERE user_id = ? AND project_id = ?",
+                (user_id,
+                 project_id))
+            if not cursor.fetchone():
+                return jsonify(
+                    {"success": False, "error": "Project not found or not authorized."}), 403
+
+            # Update the project title and description
+            cursor.execute("""UPDATE projects
+                             SET name = ?, description = ?
+                             WHERE project_id = ?""", (new_title, new_description, project_id))
+
+            # Also update the corresponding top-level work_item's name and description
+            cursor.execute("""UPDATE work_items
+                             SET name = ?, description = ?
+                             WHERE project_id = ? AND parent_item_id IS NULL
+                             AND name = (SELECT name FROM projects WHERE project_id = ?)""",
+                           (new_title, new_description, project_id, project_id))
+
+            conn.commit()
+            flash("Project updated successfully!") # Add a flash message for user feedback
+            return redirect("/projects") # Redirect to projects list after successful update
+
+        except Exception as e:
+            traceback.print_exc()
+            conn.rollback()
+            return jsonify(
+                {"success": False, "error": f"Internal server error: {e}"}), 500
+
+    # Fallback for unsupported methods
+    return error_page("Method not allowed", 405)
     """Edit project title and potentially other details."""
     user_id = session["user_id"]
     conn = get_db()

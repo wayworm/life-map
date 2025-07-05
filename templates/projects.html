@@ -4,65 +4,139 @@
     Projects
 {% endblock %}
 
+{% block style %}
+<style>
+    /* Custom styles to enhance Bootstrap */
+    /* Common button styles */
+    .btn {
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+        padding: 0.375rem 0.75rem; /* Standard Bootstrap button padding */
+        font-size: 0.875rem; /* Standard Bootstrap button font size */
+    }
+
+    /* Primary button style */
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+        transform: translateY(-1px);
+    }
+
+    /* Secondary button style */
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+        transform: translateY(-1px);
+    }
+
+    /* Custom styles for table header */
+    .table-dark th {
+        background-color: #343a40; /* Darker header background */
+        color: white;
+    }
+
+    /* Style for the "New Project" button at the bottom */
+    .btn-new-project {
+        background-color: #28a745; /* Success green */
+        border-color: #28a745;
+        color: white;
+        padding: 0.5rem 1rem; /* Slightly larger padding for this main action button */
+        font-size: 1rem; /* Standard font size */
+    }
+
+    .btn-new-project:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+        transform: translateY(-1px);
+    }
+
+</style>
+{% endblock %}
+
 {% block username %}
-        <div class="fs-6 fw-bold">Hi, {{username}}.</div>
+    <div class="fs-6 fw-bold">Hi, {{username}}.</div>
 {% endblock %}
 
 {% block main %}
-    <div class="container my-4"> {# Added a container for better spacing and responsiveness #}
-        <h2 class="mb-4">My Projects</h2> {# Added a heading for clarity #}
-        <div class="table-responsive"> {# Added table-responsive for better mobile view of tables #}
-            <table class="table table-hover table-striped"> {# Added Bootstrap table styles #}
-                <thead class="table-dark"> {# Dark header for contrast #}
+    {# Main container div for the card-like appearance #}
+    <div class="mb-4 shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 90%; width: 100%;">
+
+        {# Heading for the form section, styled like the account page sections #}
+        <div class="fs-4 fw-bold mb-4 text-center">
+            My Projects
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-dark">
                     <tr>
                         <th scope="col">Project</th>
                         <th scope="col">Description</th>
+                        <th scope="col">Due Date</th>
                         <th scope="col">Tasks</th>
-                        <th scope="col">Rename</th>
+                        <th scope="col">Edit</th> {# Renamed column header #}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for row in projects %} {# Changed 'row' to 'project' for better readability if desired #}
+                    {% for row in projects %}
                     <tr>
                         <td> {{ row["name"] }} </td>
                         <td> {{ row["description"] }} </td>
+                        <td> {{ row["end_date"]}}
                         <td>
-                            <button class="details-button btn btn-sm btn-outline-primary" data-project-id="{{ row["project_id"] }}">
-                                <i class="fas fa-info-circle me-1"></i> Tasks
+                            <button class="details-button btn btn-sm btn-primary" data-project-id="{{ row["project_id"] }}">
+                                <i class="fa-solid fa-list me-1"></i> Tasks {# Changed icon to fa-list #}
                             </button>
                         </td>
                         <td>
-                            <button class="edit-button btn btn-sm btn-outline-secondary" data-project-id="{{ row["project_id"] }}">
-                                <i class="fas fa-edit me-1"></i> Rename
+                            <button class="edit-button btn btn-sm btn-secondary" data-project-id="{{ row["project_id"] }}">
+                                <i class="fa-solid fa-gear me-1"></i> Edit {# Changed icon to fa-gear (cog wheel) and text to Edit #}
                             </button>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div> {# End table-responsive #}
-        
-        {# Ensure any JavaScript is also within the block, ideally at the end #}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const detailButtons = document.querySelectorAll('.details-button');
-                detailButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const projectId = this.dataset.projectId; // Access the data-project-id attribute
-                        window.location.href = '/details/' + projectId;
-                    });
-                });
+        </div>
 
-                const editButtons = document.querySelectorAll('.edit-button'); // Corrected variable name
-                editButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const projectId = this.dataset.projectId; // Access the data-project-id attribute
-                        // Note: your /projects/<int:project_id> route currently routes to 'edit_title'.
-                        // Make sure this matches your Flask route mapping for editing projects.
-                        window.location.href = '/projects/' + projectId + '/edit';
-                    });
+        <div class="d-flex justify-content-center mt-4">
+            <a href="/newProject" class="btn btn-new-project">
+                <i class="fa-solid fa-plus me-2"></i> Add New Project
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const detailButtons = document.querySelectorAll('.details-button');
+            detailButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const projectId = this.dataset.projectId;
+                    window.location.href = '/details/' + projectId;
                 });
             });
-        </script>
-    </div> {# End container #}
+
+            const editButtons = document.querySelectorAll('.edit-button');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const projectId = this.dataset.projectId;
+                    window.location.href = '/projects/' + projectId + '/edit';
+                });
+            });
+        });
+    </script>
 {% endblock %}
