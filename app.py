@@ -5,8 +5,31 @@ import traceback
 import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 
+# TODO: Add a maximum value of 6 layers of subtasks. Present a message to screen if they try to go deeper.
+
+# TODO: Link to Google Calendar.
+    # TODO: Add functionality to sort hours assigned to task
+
+# TODO: Add functionality to reorder the tasks by drag and drop.
+
+
+# TODO: get rid of the mapping from js to python dict keys in the build_task_tree function. Not a big problem, just unnecessary and unclean.
+# TODO: Logic to disallow a subtask to have more hours attributed to it than it's parent task.
+
+# TODO: change Edit project details menu to look like the other menus.
 # TODO: make cancel button on "rename project" screen just redirect to projects page.
-# TODO: Add a maximum value of 6 layers of subtasks. Present a message to screen if they try to go deeper
+# TODO: add edit description of project to "rename" menu. No longer show an editable text box for the description on the tasks page. 
+# TODO: Add Show password checkboxes to register and log in pages 
+# TODO: Reduce size of indent for subtasks  
+# TODO: The username log-in field should also accespt e-mail and sign them in
+
+
+# finished:
+# TODO: Add 'planned_hours' columns to work_items table DONE
+# TODO: Change subtask minimisaiton functionality. Remove the description box only, rather than whole card.
+
+
+
 # Configure application
 app = Flask(__name__)
 
@@ -63,13 +86,16 @@ def build_task_tree(tasks_flat_list):
         list: A list of top-level task dictionaries, each potentially containing
               a 'subtasks' key which is a list of subtask dictionaries.
     """
-    # Create a dictionary to quickly access tasks by their item_id
+    # Create a dictionary to access tasks by their item_id
     # Ensure all original fields are copied into the dictionary,
     # as the Jinja template expects 'id' and 'parent_item_id' for display.
     # Map 'item_id' to 'id' and 'is_completed' to 'completed' boolean for consistency
     # with the Jinja template and JavaScript expectations.
+
     task_map = {}
+
     for task_row in tasks_flat_list:
+
         task_dict = dict(task_row)  # Convert sqlite3.Row to dict
         # Map item_id to 'id' for Jinja/JS
         task_dict['id'] = task_dict['item_id']
@@ -77,6 +103,7 @@ def build_task_tree(tasks_flat_list):
         task_dict['parent_item_id'] = task_dict['parent_item_id']
         # Map is_completed to 'completed' boolean
         task_dict['completed'] = bool(task_dict['is_completed'])
+
         task_map[task_dict['id']] = task_dict
 
     tree = []  # This will hold the top-level tasks
@@ -549,7 +576,7 @@ def tasks(project_id):
     tree = build_task_tree(tasks)  # Build the hierarchical tree
 
     return render_template(
-        'tasks v4.html',
+        'tasks.html',
         tasks=tree,
         project_id=project_id,
         project_name=project_name,
@@ -648,15 +675,16 @@ def save_tasks():
                 client_id = task["id"]
                 name = task["name"]
                 description = task.get("description")
+                
                 due_date = task.get("due_date")
                 # Default to False if not present
                 completed = task.get("completed", False)
                 priority = task.get("priority")  # Added priority
                 status = task.get("status")  # Added status
                 assigned_to_user_id = task.get(
-                    "assigned_to_user_id")  # Added assigned_to_user_id
+                    "assigned_to_user_id")  
                 display_order = task.get(
-                    "display_order")  # Added display_order
+                    "display_order")  
 
                 print(
                     f"Debug: Processing task - client_id: '{client_id}', name: '{name}', parent_db_id: {parent_db_id}")
@@ -715,11 +743,17 @@ def save_tasks():
         # name
         update_query = """
         UPDATE work_items
-        SET name = (
+        SET 
+        name = (
             SELECT projects.name
             FROM projects
             WHERE work_items.project_id = projects.project_id
-        )
+        ), 
+        description = (
+        SELECT projects.description
+            FROM projects
+            WHERE work_items.project_id = projects.project_id
+            )
         WHERE parent_item_id IS NULL
         AND name != (
             SELECT projects.name

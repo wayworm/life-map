@@ -1,34 +1,79 @@
-{% extends "layout.html" %}
+    {% extends "layout.html" %}
 
-{% block title %}
-    Account
-{% endblock %}
+    {% block title %}
+        Account
+    {% endblock %}
 
-{% block username %}
-    Hi, {{ username}}
-{% endblock %}
+    {% block username %}
+        <div class="fs-6 fw-bold">Hi, {{username}}.</div>
+    {% endblock %}
 
-{% block main %}
-    <div class="bg-light shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 400px; width: 100%;">
-        <form action="/change_username" method="POST">
-            <div class="mb-4">
-                <div class="mb-3"><label id="reset_label"> Change Username </label></div>
+    {% block main %}
+        <div class="mb-4 shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 400px; width: 100%;">
+            
+            <form action="/change_username" method="POST">
+                <div class="mb-2">
+                    <div class="fs-4 fw-bold mb-3">
+                        <label id="reset_label"> Change Username </label></div>
 
-                <div class="mb-3"><input autocomplete="off" required autofocus class="form-control mx-auto w-auto" name="username" placeholder="{{ username }}" type="username"></div>
-            </div>
-                <button class="btn btn-primary" type="submit">Change</button>
-        </form>
+                    <div class="d-flex flex-row"><input autocomplete="off" required autofocus class="form-control" name="username" placeholder="{{ username }}" type="username"></div>
+                </div>
 
-        <form action="/reset_password" method="POST">
-            <div class="mb-4">
-                <div class="mb-3"><label id="reset_label"> Reset Password </label></div>
+                <div class="d-flex flex-row-reverse">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 400px; width: 100%;">
+            <form action="/reset_password" method="POST">
+                <div class="mb-2">
+                    <label class="fs-4 fw-bold mb-3" id="reset_label"> Reset Password </label>
+                    
+                    <div class="d-flex flex-column">
+                            
+                        <div class="mb-!"><input autocomplete="off" required autofocus class="form-control" name="current_password" placeholder="Current Password" type="password"></div>
+                        <div class="form-check d-flex flex-row">
+                            <input class="form-check-input" type="checkbox" id="showPassword" onclick="myFunction('current_password')">
+                            <label class="form-check-label mb-3" style="margin-left:0.5rem;" for="showPassword">
+                                Show Current Password
+                            </label>
+                        </div>
+
+                        <div class="mb-1"><input autocomplete="off" required class="form-control" name="new_password" placeholder="New Password" type="password" id="new_password"></div>
+                        <div class="form-check d-flex flex-row">
+                            <input class="form-check-input" type="checkbox" id="showPassword" onclick="myFunction('new_password')">
+                            <label class="form-check-label mb-3" style="margin-left:0.5rem;" for="showPassword">
+                                Show New Password
+                            </label>
+                        </div>
+
+                        <div><input autocomplete="off" required class="form-control" name="confirmation" placeholder="Retype new password" type="password"></div>
+
+                        
+
+
+                    </div>
+                </div>
                 
-                <div class="mb-2"><input autocomplete="off" required autofocus class="form-control mx-auto w-auto" name="current_password" placeholder="Current Password" type="password"></div>
-                <div class="mb-2"><input autocomplete="off" required class="form-control mx-auto w-auto" name="new_password" placeholder="New Password" type="password"></div>
-                <div class="mb-2"><input autocomplete="off" required class="form-control mx-auto w-auto" name="confirmation" placeholder="Retype new password" type="password"></div>
+                <div class="d-flex flex-row-reverse">
+                    <button class="btn btn-primary" type="submit">Reset</button>
+                </div>
+            </form>
+        </div>
 
-            </div>
-            <button class="btn btn-primary" type="submit">Reset</button>
-        </form>
-    </div>
-{% endblock %}
+
+        <script>
+
+            function myFunction(id) {
+                var x = document.getElementById(id);
+                if (x.type === "password") {
+                    x.type = "text";
+                } else {
+                    x.type = "password";
+                }
+                } 
+        </script>
+
+
+    {% endblock %}

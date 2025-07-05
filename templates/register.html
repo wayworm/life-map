@@ -5,27 +5,29 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/register" method="post">
-        
-        <div class="mb-3">
+    <div class="shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 400px; width: 100%;">
+        <form action="/register" method="post">
+            
+            <label  class= "mb-3 fs-4 fw-bold" id="register_label">Register:</label>
 
-            <label  class= "mb-3" id="register_label">Register:</label>
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Username" type="text">
-        </div>
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Username" type="text">
+            </div>
 
-        <div class="mb-3">
-            <input class="form-control mx-auto w-auto" name="email" placeholder="E-Mail" type="email">
-        </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-auto" name="email" placeholder="E-Mail" type="email">
+            </div>
 
-        <div class="mb-3">
-            <input class="form-control mx-auto w-auto" name="password" placeholder="Password" type="password">
-        </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-auto" name="password" placeholder="Password" type="password">
+            </div>
 
-        <div class="mb-3">
-            <input class="form-control mx-auto w-auto" name="confirmation" placeholder="Password Confirmation" type="password">
-        </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-auto" name="confirmation" placeholder="Password Confirmation" type="password">
+            </div>
 
 
-        <button class="btn btn-primary" type="submit">Register</button>
-    </form>
+            <button class="btn btn-primary" type="submit">Register</button>
+        </form>
+    </div>
 {% endblock %}
