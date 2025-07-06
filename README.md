@@ -79,7 +79,6 @@ Database: SQLite3
 Prerequisites
 
 Python 3.x
-
 pip (Python package installer)
 
 Steps
@@ -91,7 +90,7 @@ cd LifeMap
 
 Install Python dependencies located in the requirements.txt
 
-Initialize the Database:
+Initialize the Database using provided resetDatabase.py:
 
 The project contains the database file, here is the schema used within:
 
@@ -102,37 +101,39 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE,
     password_hash TEXT NOT NULL
 );
-
--- projects table
-CREATE TABLE IF NOT EXISTS projects (
-    project_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    start_date TEXT,
-    end_date TEXT,
-    FOREIGN KEY (user_id) REFERENCES users (user_id)
-);
-
--- work_items table (tasks and subtasks)
-CREATE TABLE IF NOT EXISTS work_items (
-    item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    project_id INTEGER NOT NULL,
-    parent_item_id INTEGER, -- NULL for top-level tasks
-    name TEXT NOT NULL,
-    description TEXT,
-    due_date TEXT,
-    is_completed INTEGER DEFAULT 0, -- 0 for false, 1 for true
-    priority INTEGER,
-    status TEXT,
-    assigned_to_user_id INTEGER,
-    display_order INTEGER, -- For manual sorting
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_item_id) REFERENCES work_items (item_id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_to_user_id) REFERENCES users (user_id)
-);
+<br><br><br><br>
+-- projects table<br>
+CREATE TABLE IF NOT EXISTS projects (<br>
+    project_id INTEGER PRIMARY KEY AUTOINCREMENT,<br>
+    user_id INTEGER NOT NULL,<br>
+    name TEXT NOT NULL,<br>
+    description TEXT,<br>
+    start_date TEXT,<br>
+    end_date TEXT,<br>
+    FOREIGN KEY (user_id) REFERENCES users (user_id)<br>
+);<br>
+<br>
+<br>
+<br>
+-- work_items table (tasks and subtasks)<br>
+CREATE TABLE IF NOT EXISTS work_items (<br>
+    item_id INTEGER PRIMARY KEY AUTOINCREMENT,<br>
+    project_id INTEGER NOT NULL,<br>
+    parent_item_id INTEGER, -- NULL for top-level tasks<br>
+    name TEXT NOT NULL,<br>
+    description TEXT,<br>
+    due_date TEXT,<br>
+    is_completed INTEGER DEFAULT 0, -- 0 for false, 1 for true<br>
+    priority INTEGER,<br>
+    status TEXT,<br>
+    assigned_to_user_id INTEGER,<br>
+    display_order INTEGER, -- For manual sorting<br>
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,<br>
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,<br>
+    FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE,<br>
+    FOREIGN KEY (parent_item_id) REFERENCES work_items (item_id) ON DELETE CASCADE,<br>
+    FOREIGN KEY (assigned_to_user_id) REFERENCES users (user_id)<br>
+);<br>
 
 
 Run the application:
@@ -145,20 +146,20 @@ Open your web browser and navigate to http://127.0.0.1:5000/.
 Project Structure
 
 .
-├── app.py                  # Main Flask application file
-├── LifeMap.db              # SQLite database file
-├── static/                 # Static assets
-│   └── ...
-└── templates/              # HTML templates using Jinja2
-├── account.html                # Account management page
-├── error_page.html             # Error display page
-├── editProject.html            # Edit project details page
-├── layout.html                 # Base template for all pages (header, footer, common styles)
-├── login.html                  # User login page
-├── newProject.html             # Create new project page
-├── projects.html               # List of user's projects
-├── register.html               # User registration page
-└── tasks v4.html               # Project-specific task management page
+├── app.py                      
+├── LifeMap.db                  >
+├── static/                     
+│   └── ...<br>
+└── templates/                  
+├── account.html              
+├── error_page.html      
+├── editProject.html            
+├── layout.html                 
+├── login.html        
+├── newProject.html           
+├── projects.html             
+├── register.html            
+└── tasks v4.html              
 
 Usage
 

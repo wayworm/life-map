@@ -15,21 +15,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 # TODO: Make nav bar stick to top of page when scrolling down.
 
-# TODO: Porject pages due date -->years, months, weeks, days dependings on timescale 
-
-
-# finished:
-    #: Add 'planned_hours' columns to work_items table DONE
-    #: Change subtask minimisaiton functionality. Remove the description box only, rather than whole card.
-    #: change Edit project details menu to look like the other menus.
-    #: make cancel button on "rename project" screen just redirect to projects page.
-    #: Reduce size of indent for subtasks.
-    #: The username log-in field should also accespt e-mail and sign them in.
-    #: add edit description of project to "rename" menu. No longer show an editable text box for the description on the tasks page.
-    #: Add Show password checkboxes to register and log in pages 
- 
-
-
+# TODO: Project pages due date --> years, months, weeks, days dependings on timescale 
 
 
 # Configure application
