@@ -261,6 +261,27 @@
         display: none;
     }
 
+    /* Alert message styling */
+    .alert-message {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 1050;
+        display: none; /* Hidden by default */
+        animation: fadeOut 4s forwards; /* Fade out after 4 seconds */
+    }
+
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
 
 
 </style>
@@ -301,7 +322,7 @@
                                         </span>
                                     </div>
                                 {% endif %}
-                               
+                                
 
                                 {# Buttons for Level > 0 tasks (Add, Toggle, Delete) #}
                                 {% if level > 0 %}
@@ -397,6 +418,8 @@
         </form>
     </div>
 
+    <div id="alertMessage" class="alert-message"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
@@ -405,6 +428,23 @@
 
             // Store IDs of tasks marked for deletion
             const deletedTaskIds = new Set();
+
+            // Maximum allowed subtask level (0-indexed, so level 6 means 7 levels deep including the project)
+            const MAX_SUBTASK_LEVEL = 6; 
+
+            /**
+             * Displays a temporary alert message to the user.
+             * @param {string} message - The message to display.
+             */
+            function showAlert(message) {
+                const alertBox = document.getElementById('alertMessage');
+                alertBox.textContent = message;
+                alertBox.style.display = 'block';
+                // Restart the animation
+                alertBox.style.animation = 'none';
+                void alertBox.offsetWidth; // Trigger reflow
+                alertBox.style.animation = 'fadeOut 4s forwards';
+            }
 
             /**
              * Generates a new unique temporary ID for a task or subtask.
@@ -447,37 +487,44 @@
                         </div>
                     `;
                     plannedHoursFieldHtml = `
-                        <div class="mb-2" style="max-width: 120px;">
-                            <label for="planned_hours_${htmlId}" class="form-label small mb-1">Planned Hours</label>
-                            <input type="number" min="0" step="0.1" class="form-control form-control-sm" id="planned_hours_${htmlId}" name="planned_hours_${htmlId}" value="" placeholder="Hours">
+                        <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
+                            <label for="planned_hours_${htmlId}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label>
+                            <input type="number" min="0" step="0.1" class="form-control form-control-sm flex-grow-1"
+                                id="planned_hours_${htmlId}"
+                                name="planned_hours_${htmlId}"
+                                value=""
+                                placeholder="0.0">
                         </div>
                     `;
                     dueDateFieldHtml = `
-                        <div class="form-floating">
-                            <input type="date" class="form-control" id="due_date_${htmlId}" name="due_date_${htmlId}" value="" placeholder="Due Date">
-                            <label for="due_date_${htmlId}">Due Date</label>
+                        <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
+                            <label for="due_date_${htmlId}" class="form-label small mb-0 text-nowrap">Due Date:</label>
+                            <input type="date" class="form-control form-control-sm flex-grow-1" id="due_date_${htmlId}" name="due_date_${htmlId}" value="" placeholder="YYYY-MM-DD">
                         </div>
                     `;
-                    addSubtaskButtonInHeader = `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>`;
+                    // Only show add subtask button if not at the maximum allowed level
+                    if (level < MAX_SUBTASK_LEVEL) {
+                        addSubtaskButtonInHeader = `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>`;
+                    }
                     deleteButtonHtml = `<button type="button" class="btn btn-sm btn-outline-danger delete-task-btn"><i class="fa-solid fa-trash"></i></button>`;
                     descriptionLabel = 'Description';
                     descriptionFieldHtml = `
-                        <div class="form-floating mb-2">
+                        <div class="form-floating flex-grow-1 w-100">
                             <textarea class="form-control" placeholder="${descriptionLabel}" id="description_${htmlId}" name="description_${htmlId}" style="height: 100px;"></textarea>
                             <label for="description_${htmlId}">${descriptionLabel}</label>
                         </div>
                     `;
                     completedCheckboxHtml = `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input completed-checkbox" id="completed_${htmlId}" name="completed_${htmlId}">
                             <label class="form-check-label" for="completed_${htmlId}">Completed</label>
                         </div>
                     `;
                 } else {
                     taskNameAndInputHtml = `
-                        <h2 class="flex-grow-1 mb-0 fs-15 fw-bold">{{ project_name }}</h2>
-                        {# We explicitly don't provide an editable description field for level 0 here #}
+                        <h2 class="mb-0 fs-15 fw-bold project-name-centered">{{ project_name }}</h2>
                     `;
+                    // The "Add Subtask" button for level 0 is in the footer and always present
                     addSubtaskButtonInFooter = `
                                 <div class="d-flex justify-content-center mt-3">
                                     <button type="button" class="btn btn-primary add-subtask-btn px-4">
@@ -505,15 +552,15 @@
                         <div class="card-body">
                             <div class="task-header">
                                 ${taskNameAndInputHtml}
-                                ${plannedHoursFieldHtml}
-                                ${dueDateFieldHtml}
+                                ${level > 0 ? plannedHoursFieldHtml : ''}
+                                ${level > 0 ? dueDateFieldHtml : ''}
                                 ${addSubtaskButtonInHeader}
                                 ${minimizeButtonHtml}
                                 ${deleteButtonHtml}
                             </div>
-                            <div class="task-options mb-1">
+                            <div class="task-options mb-1 d-flex flex-wrap align-items-center gap-2">
                                 ${descriptionFieldHtml}
-                                ${completedCheckboxHtml}
+                                ${level > 0 ? completedCheckboxHtml : ''}
                             </div>
                             <div class="subtask-list">
                                 </div>
@@ -630,9 +677,12 @@
 
                 const taskOptions = taskCard.querySelector('.task-options');
                 const collapseIcon = toggleButton.querySelector('.collapse-icon');
+                const subtaskList = taskCard.querySelector('.subtask-list'); // Get the actual subtask list
 
-                if (taskOptions) {
+                if (taskOptions && subtaskList) {
                     taskOptions.classList.toggle('task-options-small-mode');
+                    subtaskList.classList.toggle('subtask-list-collapsed'); // Toggle collapse class
+
                     if (taskOptions.classList.contains('task-options-small-mode')) {
                         collapseIcon.innerHTML = '&#9650;'; // up arrow = minimized
                     } else {
@@ -686,10 +736,16 @@
                     return;
                 }
 
-                const parentTaskId = parentTaskCard.dataset.taskId;
                 const parentLevel = parseInt(parentTaskCard.dataset.level || '0', 10); // Get parent's level, default to 0
                 const newSubtaskLevel = parentLevel + 1; // Increment level for the new subtask
 
+                // Enforce the 6-level limit
+                if (newSubtaskLevel > MAX_SUBTASK_LEVEL) {
+                    showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
+                    return; 
+                }
+
+                const parentTaskId = parentTaskCard.dataset.taskId;
                 const newSubtaskId = generateNewTemporaryTaskId();
                 const newSubtaskHtml = generateTaskHtml(newSubtaskId, parentTaskId, newSubtaskLevel); // Pass new level
 
@@ -772,7 +828,7 @@
                         taskName = card.querySelector('.task-header h2').textContent;
                         // For level 0, description, due_date, completed, and planned_hours are not editable or managed via this form,
                         // so we don't try to read them from inputs. They are read from the initial project_details.
-                        description = card.querySelector('.task-options.mb-1.mx-auto.fs-6.fw-bold.i').textContent.trim().replace(/^"|"$/g, '');
+                        description = document.querySelector('.task-options.mb-1.mx-auto.fs-6.fw-bold.i').textContent.trim().replace(/^"|"$/g, '');
                         dueDate = null; // No due date input for project task here
                         completed = false; // Project task itself is not "completed" in this sense
                         plannedHours = null ; // No planned hours input for project task here
@@ -840,10 +896,12 @@
                     } else {
                         console.error('Failed to save tasks:', result.error);
                         // Show an error message to the user
+                        showAlert(`Failed to save tasks: ${result.error || 'Unknown error'}`);
                     }
                 } catch (error) {
                     console.error('Error during fetch:', error);
                     // Show a network error message
+                    showAlert('Error saving tasks. Please check your connection.');
                 }
             });
 
@@ -861,4 +919,4 @@
     </script>
 
 
-{% endblock %}
+{% endblock %}  
