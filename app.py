@@ -725,6 +725,28 @@ def projects_list():
         return error_page("Request Error, Only GET requests accepted.", 403)
 
 
+
+@app.route("/projects/<int:project_id>/delete", methods=["POST"])
+@login_required
+def delete_project(project_id):
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        conn.execute("""DELETE
+                    FROM projects
+                    WHERE project_id = ?""", (project_id,))
+        
+        conn.commit()
+
+    except Exception as e:
+        print(f"Error {e}")
+
+    return redirect("/projects")
+
+
+
 @app.route("/save-tasks", methods=["POST"])
 @login_required
 def save_tasks():
@@ -739,10 +761,6 @@ def save_tasks():
         tasks_data = data.get("tasks", [])
         deleted_task_ids = data.get("deleted_task_ids", [])
 
-        print(f"Debug: Received project_id: {project_id}")
-        print(f"Debug: Received tasks_data: {tasks_data}")
-        print(f"Debug: Received deleted_task_ids: {deleted_task_ids}")
-
         # Validate project ownership
         cursor.execute(
             "SELECT 1 FROM projects WHERE user_id = ? AND project_id = ?",
@@ -756,18 +774,20 @@ def save_tasks():
         if len(deleted_task_ids) > 0:
             # Convert all deletable IDs to integers in one go, filtering out
             # "new-" or invalid IDs
+
             clean_deleted_ids = []
             for task_id in deleted_task_ids:
                 if isinstance(task_id, str) and task_id.isdigit():
                     clean_deleted_ids.append(int(task_id))
 
-            if clean_deleted_ids:  # Only proceed if there are valid IDs to delete
-                # Use IN clause for efficiency to delete multiple tasks
+            if clean_deleted_ids:  # proceed if there are valid IDs to delete
+
                 placeholders = ','.join(['?'] * len(clean_deleted_ids))
                 cursor.execute(f"""
                     DELETE FROM work_items
                     WHERE item_id IN ({placeholders}) AND project_id = ?
                 """, clean_deleted_ids + [project_id])
+                
                 print(
                     f"Debug: Deleted {
                         cursor.rowcount} tasks with IDs: {clean_deleted_ids}")
@@ -796,6 +816,9 @@ def save_tasks():
                     "assigned_to_user_id")  
                 display_order = task.get(
                     "display_order")  
+                planned_hours = task.get("planned_hours")
+                planned_hours = float(planned_hours) if planned_hours not in ['', None] else None
+
 
                 print(
                     f"Debug: Processing task - client_id: '{client_id}', name: '{name}', parent_db_id: {parent_db_id}")
@@ -807,15 +830,18 @@ def save_tasks():
                     # This is a new task, insert it
                     cursor.execute("""
                         INSERT INTO work_items
-                        (project_id, parent_item_id, name, description, due_date, is_completed, priority, status, assigned_to_user_id, display_order)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (project_id, parent_db_id, name, description, due_date, completed, priority, status, assigned_to_user_id, display_order))
+                        (project_id, parent_item_id, name, description, due_date, is_completed, priority, status, assigned_to_user_id, display_order, planned_hours)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (project_id, parent_db_id, name, description, due_date, completed, priority, status, assigned_to_user_id, display_order, planned_hours))
+                    
                     new_db_id = cursor.lastrowid
+                    
                     # Map temp ID to real ID for subtasks
                     id_map[client_id] = new_db_id
                     current_db_id = new_db_id
                     print(
                         f"Debug: Inserted new task. Client ID: {client_id}, New DB ID: {new_db_id}")
+                
                 # Check for existing tasks (numeric ID)
                 elif isinstance(client_id, (int, str)) and str(client_id).isdigit():
                     # This is an existing task, update it
@@ -824,9 +850,10 @@ def save_tasks():
                         cursor.execute("""
                             UPDATE work_items
                             SET name = ?, description = ?, due_date = ?, is_completed = ?,
-                                priority = ?, status = ?, assigned_to_user_id = ?, display_order = ?, parent_item_id = ?
-                            WHERE item_id = ? AND project_id = ?
-                        """, (name, description, due_date, completed, priority, status, assigned_to_user_id, display_order, parent_db_id, current_db_id, project_id))
+                                priority = ?, status = ?, assigned_to_user_id = ?, display_order = ?, parent_item_id = ?,  planned_hours = ?
+                            WHERE item_id = ? AND project_id = ? 
+                        """, (name, description, due_date, completed, priority, status, assigned_to_user_id, display_order, parent_db_id, planned_hours, current_db_id, project_id ))
+
                         print(
                             f"Debug: Updated existing task. DB ID: {current_db_id}, Parent ID: {parent_db_id}")
                     except ValueError:

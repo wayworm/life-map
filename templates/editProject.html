@@ -42,6 +42,19 @@
         border-color: #545b62;
         transform: translateY(-1px);
     }
+
+    /* Red danger button for delete */
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+        transform: translateY(-1px);
+    }
 </style>
 {% endblock %}
 
@@ -82,6 +95,15 @@
                 </button>
             </div>
         </form>
+
+        <form id="deleteProjectForm" method="POST" action="/projects/{{ project_id }}/delete" class="mt-4">
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-danger" id="deleteProjectBtn">
+                    <i class="fa-solid fa-trash-alt me-2"></i> Delete Project
+                </button>
+            </div>
+        </form>
+
     </div>
 
     <script>
@@ -90,6 +112,15 @@
             if (cancelEditButton) {
                 cancelEditButton.addEventListener('click', function() {
                     window.location.href = '/projects';
+                });
+            }
+
+            const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+            if (deleteProjectBtn) {
+                deleteProjectBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                        document.getElementById('deleteProjectForm').submit();
+                    }
                 });
             }
         });
