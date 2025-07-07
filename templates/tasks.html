@@ -18,43 +18,44 @@
         margin-bottom: 1.5rem;
         text-align: center;
     }
+    
+    .drag-handle {
+        cursor: grab;
+        color: #adb5bd;
+        margin-right: 8px;
+        font-size: 1.1rem;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
 
     .task-header {
         display: flex;
-        align-items: center; /* Ensures vertical alignment */
-        position: relative; /* Crucial for absolute positioning of children */
-        gap: 0.5rem; /* Keep gap for the default case if level > 0 */
+        align-items: center;
+        position: relative;
+        gap: 0.5rem;
         margin-bottom: 0.5rem;
         flex-wrap: wrap; 
     }
 
-    /* New CSS for centering the project name specifically */
     .project-name-centered {
-        position: absolute; /* Take it out of the flex flow */
-        left: 50%; /* Start from the middle */
-        transform: translateX(-50%); /* Move back by half its own width */
-        /* Ensure it's above other elements if necessary, though not usually needed here */
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         z-index: 1; 
-        /* Prevent the h2 from contributing to flex item width calculations in level 0. */
-        /* This allows the flex container to correctly distribute the remaining items. */
-        width: fit-content; /* Or a specific max-width if desired */
-        white-space: nowrap; /* Prevent wrapping for the title */
+        width: fit-content;
+        white-space: nowrap;
     }
 
-    /* Adjustments for the planned time div for level 0 to ensure it's still visible */
-    /* This specific rule ensures that planned time is always on the right for level 0,
-    even if flex-wrap occurs. */
-    .task-header > .mb-2.text-end.ms-auto { /* Target specifically the planned time div within task-header */
-        margin-left: auto; /* Ensure it stays pushed to the right */
-        position: relative; /* Bring it into a stacking context above the absolutely positioned h2 if needed */
-        z-index: 2; /* Ensure it appears above the centered title if they overlap */
+    .task-header > .mb-2.text-end.ms-auto {
+        margin-left: auto;
+        position: relative;
+        z-index: 2;
     }
 
-    /* To prevent the "Planned Time" from wrapping *under* the absolute H2 on smaller screens,
-    we might need to ensure minimum space or use flex-grow-1 on the other elements if they exist.
-    However, for level 0, it's just the h2 and the planned time. */
-    .task-header h2 + .mb-2 { /* If the h2 and planned time are direct siblings and h2 is not level 0 */
-        margin-left: auto !important; /* Force it to the right if there are other elements */
+    .task-header h2 + .mb-2 {
+        margin-left: auto !important;
     }
 
     .task-header input[type="text"],
@@ -69,22 +70,21 @@
     }
 
     .subtask-list {
-        padding-left: 1.1rem; /* Increased indent for better visual separation */
-        border-left: 2px solid #0d6efd; /* Visual cue for subtasks */
+        padding-left: 1.1rem;
+        border-left: 2px solid #0d6efd;
         margin-top: 0.5rem;
+        min-height: 10px; /* Makes it a valid drop target even when empty */
     }
 
-    /* New CSS for minimizing subtasks */
     .subtask-list.subtask-list-collapsed {
         display: none;
     }
-
 
     .card {
         border-radius: 0.5rem;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.075);
         transition: transform 0.2s ease-in-out;
-        margin-bottom: 0.75rem; /* Consistent vertical space */
+        margin-bottom: 0.75rem;
     }
 
     .card-body {
@@ -98,163 +98,40 @@
         padding: 0.4rem 0.75rem;
     }
 
-    .btn-sm {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.875rem;
-    }
+    /* Styles for pastel-colored subtask levels */
+    .subtask-level-0 { background-color: #ffffff; border: 1px solid #e0e0e0; }
+    .subtask-level-1 { background-color: #e6f7ff; border: 1px solid #a8dadc; }
+    .subtask-level-2 { background-color: #e0ffe6; border: 1px solid #80ed99; }
+    .subtask-level-3 { background-color: #fff0e6; border: 1px solid #ffba80; }
+    .subtask-level-4 { background-color: #ffe6f0; border: 1px solid #ff80a0; }
+    .subtask-level-5 { background-color: #f0e6ff; border: 1px solid #bf80ff; }
+    .subtask-level-6 { background-color: #e6ffee; border: 1px solid #a5f0c0; }
 
-    .btn-primary {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-
-    .btn-primary:hover {
-        background-color: #0b5ed7;
-        border-color: #0a58ca;
-        transform: translateY(-1px);
-    }
-
-    .btn-danger {
-        background-color: #dc3545;
-        border-color: #dc3545;
-    }
-
-    .btn-danger:hover {
-        background-color: #c82333;
-        border-color: #bd2130;
-        transform: translateY(-1px);
-    }
-
-    .btn-success {
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-        transform: translateY(-1px);
-    }
-
-    .form-floating > .form-control,
-    .form-floating > .form-select {
-        padding: 0.75rem 0.5rem;
-    }
-
-    .form-floating > label {
-        padding-top: 0.5rem;
-        padding-left: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    textarea.form-control {
-        height: 80px !important;
-    }
-
-    .form-check {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.5rem; /* optional: space between checkbox and label */
-    }
-
-    /* New styles for subtask levels with pastel colors */
-    .subtask-level-0 {
-        background-color: #ffffff; /* White for main tasks */
-        border: 1px solid #e0e0e0; /* Subtle border for distinction */
-    }
-    .subtask-level-1 {
-        background-color: #e6f7ff; /* Light Blue */
-        border: 1px solid #a8dadc;
-    }
-    .subtask-level-2 {
-        background-color: #e0ffe6; /* Light Green */
-        border: 1px solid #80ed99;
-    }
-    .subtask-level-3 {
-        background-color: #fff0e6; /* Light Orange */
-        border: 1px solid #ffba80;
-    }
-    .subtask-level-4 {
-        background-color: #ffe6f0; /* Light Pink */
-        border: 1px solid #ff80a0;
-    }
-    .subtask-level-5 {
-        background-color: #f0e6ff; /* Light Purple */
-        border: 1px solid #bf80ff;
-    }
-    .subtask-level-6 {
-        background-color: #e6ffee; /* Very Light Green */
-        border: 1px solid #a5f0c0;
-    }
-    .subtask-level-7 {
-        background-color: #ffeee6; /* Very Light Orange */
-        border: 1px solid #ffccaa;
-    }
-    /* Repeat or cycle colors for deeper levels */
-    .subtask-level-8 {
-        background-color: #e0faff; /* Slightly different light blue */
-        border: 1px solid #80c4db;
-    }
-    .subtask-level-9 {
-        background-color: #f7e6ff; /* Slightly different light purple */
-        border: 1px solid #d49aff;
-    }
-    .subtask-level-10 {
-        background-color: #ffe0f0; /* Slightly different light pink */
-        border: 1px solid #ff99bb;
-    }
-    .subtask-level-11 {
-        background-color: #e6ffed; /* Another light green */
-        border: 1px solid #99edb0;
-    }
-    .subtask-level-12 {
-        background-color: #f0f8ff; /* Another light blue */
-        border: 1px solid #c0d8f0;
-    }
-
-    /* Styles for completed tasks to show a subtle overlay */
+    /* Styles for completed tasks */
     .completed-task {
-        /* No direct background-color here to allow level color to show through */
-        border-color: #c3e6cb !important; /* Keep the light green border */
-        position: relative; /* Enable pseudo-element positioning */
-        overflow: hidden; /* Keep content within bounds */
+        border-color: #c3e6cb !important;
+        position: relative;
+        overflow: hidden;
     }
-
-    /* Create a semi-transparent overlay for completed tasks */
     .card.completed-task::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(212, 237, 218, 0.7); /* A light green semi-transparent overlay */
-        z-index: 1; /* Place above the original background */
-        border-radius: inherit; /* Inherit rounded corners */
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(212, 237, 218, 0.7);
+        z-index: 1;
+        border-radius: inherit;
     }
-
-    /* Ensure the card content (text, inputs etc.) is above the overlay */
     .card.completed-task .card-body {
-        position: relative; /* Create new stacking context */
-        z-index: 2; /* Place content above the ::before pseudo-element */
+        position: relative;
+        z-index: 2;
     }
-
-    /* Ensure input text also gets line-through if it's a subtask name */
-    .completed-task .task-header input[type="text"] {
-        text-decoration: line-through;
-        color: #6c757d; /* Muted color for completed text */
-    }
-    /* Ensure the H4 for level 0 also gets line-through */
+    .completed-task .task-header input[type="text"],
     .completed-task .task-header h4 {
         text-decoration: line-through;
         color: #6c757d;
     }
 
-    .task-options-small-mode .form-floating {
-        display: none;
-    }
-
-    /* When minimized, hide the description textarea and the completed checkbox */
+    /* Styles for minimized tasks */
     .task-options.task-options-small-mode textarea,
     .task-options.task-options-small-mode label[for^="description_"],
     .task-options.task-options-small-mode .form-check {
@@ -273,8 +150,8 @@
         padding: 10px 20px;
         border-radius: 5px;
         z-index: 1050;
-        display: none; /* Hidden by default */
-        animation: fadeOut 4s forwards; /* Fade out after 4 seconds */
+        display: none;
+        animation: fadeOut 4s forwards;
     }
 
     @keyframes fadeOut {
@@ -282,39 +159,34 @@
         80% { opacity: 1; }
         100% { opacity: 0; display: none; }
     }
-
-
 </style>
 {% endblock %}
 
 {% block username %}
-        <div class="fs-6 fw-bold">Hi, {{username}}.</div>
+    <div class="fs-6 fw-bold">Hi, {{username}}.</div>
 {% endblock %}
 
-
-
 {% block main %}
-
     <div class="container-fluid mt-5">
         <form id="task-manager-form" method="POST">
-            <input type="hidden" id="project_id" name="project_id" value="{{ project_id }}"> {# Hidden input to pass project_id #}
+            <input type="hidden" id="project_id" name="project_id" value="{{ project_id }}">
             <div class="task-list">
 
                 {% macro render_task_item(task, level=0) %}
-                    <div class="card subtask-level-{{ level }} mb-1 {% if task.completed %}completed-task{% endif %}" data-task-id="{{ task.id }}" data-parent-task-id="{{ task.parent_id if task.parent_id is defined else '' }}" data-level="{{ level }}">
+                    <div class="card subtask-level-{{ level }} mb-1 {% if task.is_completed %}completed-task{% endif %}" 
+                         data-item-id="{{ task.item_id }}" 
+                         data-parent-item-id="{{ task.parent_item_id if task.parent_item_id is defined else '' }}" 
+                         data-level="{{ level }}">
                         <div class="card-body">
                             <div class="task-header">
-                                {# Project Name / Subtask Name Section #}
                                 {% if level > 0 %}
+                                    <span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
                                     <div class="form-floating flex-grow-1">
-                                        <input type="text" class="form-control" id="task_name_{{ task.id | replace('.', '_') }}" name="task_name_{{ task.id | replace('.', '_') }}" value="{{ task.name }}" placeholder="Subtask Name">
-                                        <label for="task_name_{{ task.id | replace('.', '_') }}">Subtask Name</label>
+                                        <input type="text" class="form-control" id="name_{{ task.item_id | replace('.', '_') }}" name="name_{{ task.item_id | replace('.', '_') }}" value="{{ task.name }}" placeholder="Subtask Name">
+                                        <label for="name_{{ task.item_id | replace('.', '_') }}">Subtask Name</label>
                                     </div>
                                 {% else %}
-                                    {# Project Title (Level 0): Centered using absolute positioning and flex alignment #}
                                     <h2 class="mb-0 fs-15 fw-bold project-name-centered">{{ project_name }}</h2>
-                                    
-                                    {# Display for Planned Hours at the top level (Level 0) #}
                                     <div class="mb-2 text-end ms-auto">
                                         <strong class="text-muted">Planned Time:</strong>
                                         <span class="fs-5 fw-bold text-primary">
@@ -323,71 +195,58 @@
                                     </div>
                                 {% endif %}
                                 
-
-                                {# Buttons for Level > 0 tasks (Add, Toggle, Delete) #}
                                 {% if level > 0 %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn">
-                                        <span class="collapse-icon">&#9660;</span>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn"><span class="collapse-icon">&#9660;</span></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn"><i class="fa-solid fa-trash"></i></button>
                                 {% endif %}
                             </div>
 
-                            {# Task Options and Subtask List #}
                             {% if level > 0 %}
                                 <div class="task-options mb-1 d-flex flex-wrap align-items-center gap-2">
-
-                                    {# Planned Hours Input - Label to the left of input #}
-                                    <div class="d-flex align-items-center gap-1" style="max-width: 200px;"> {# Adjusted max-width slightly for better fit #}
-                                        <label for="planned_hours_{{ task.id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label> {# Added mb-0, text-nowrap #}
+                                    <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
+                                        <label for="planned_hours_{{ task.item_id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label>
                                         <input type="number" min="0" step="0.1" class="form-control form-control-sm flex-grow-1"
-                                            id="planned_hours_{{ task.id | replace('.', '_') }}"
-                                            name="planned_hours_{{ task.id | replace('.', '_') }}"
-                                            value="{{ task.individual_planned_hours if task.individual_planned_hours is not none else '' }}"
-                                            placeholder="0.0"> {# Changed placeholder #}
+                                               id="planned_hours_{{ task.item_id | replace('.', '_') }}"
+                                               name="planned_hours_{{ task.item_id | replace('.', '_') }}"
+                                               value="{{ task.planned_hours if task.planned_hours is not none else '' }}"
+                                               placeholder="0.0">
                                     </div>
 
-                                    {# Due Date Input - Label to the left of input #}
                                     {% if task.due_date is defined %}
-                                    <div class="d-flex align-items-center gap-1" style="max-width: 200px;"> {# Adjusted max-width slightly for better fit #}
-                                        <label for="due_date_{{ task.id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Due Date:</label> {# Added mb-0, text-nowrap #}
-                                        <input type="date" class="form-control form-control-sm flex-grow-1" id="due_date_{{ task.id | replace('.', '_') }}" name="due_date_{{ task.id | replace('.', '_') }}" value="{{ task.due_date }}" placeholder="YYYY-MM-DD"> {# Changed placeholder #}
+                                    <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
+                                        <label for="due_date_{{ task.item_id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Due Date:</label>
+                                        <input type="date" class="form-control form-control-sm flex-grow-1" id="due_date_{{ task.item_id | replace('.', '_') }}" name="due_date_{{ task.item_id | replace('.', '_') }}" value="{{ task.due_date }}">
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- ** FIX 2 **: Moved Subtask Sum here to be inline and removed margin -->
+                                    {% if task.subtasks %}
+                                    <div class="text-end ms-auto"> <!-- Removed mb-2 -->
+                                        <strong class="text-muted">Subtask Sum:</strong>
+                                        <span class="fs-6 fw-bold text-info">
+                                            {{ "%.1f" | format(task.calculated_planned_hours) if task.calculated_planned_hours is not none else "N/A" }} hrs
+                                        </span>
                                     </div>
                                     {% endif %}
 
-                                    {# Description is a form-floating, so its display is handled by CSS #}
                                     <div class="form-floating flex-grow-1 w-100">
-                                        <textarea class="form-control" placeholder="Description" id="description_{{ task.id | replace('.', '_') }}" name="description_{{ task.id | replace('.', '_') }}" style="height: 100px;">{{ task.description }}</textarea>
-                                        <label for="description_{{ task.id | replace('.', '_') }}">Description</label>
+                                        <textarea class="form-control" placeholder="Description" id="description_{{ task.item_id | replace('.', '_') }}" name="description_{{ task.item_id | replace('.', '_') }}" style="height: 100px;">{{ task.description }}</textarea>
+                                        <label for="description_{{ task.item_id | replace('.', '_') }}">Description</label>
                                     </div>
 
                                     <div class="form-check mb-2">
-                                        <input type="checkbox" class="form-check-input completed-checkbox" id="completed_{{ task.id | replace('.', '_') }}" name="completed_{{ task.id | replace('.', '_') }}" {% if task.completed %}checked{% endif %}>
-                                        <label class="form-check-label" for="completed_{{ task.id | replace('.', '_') }}">Completed</label>
+                                        <input type="checkbox" class="form-check-input completed-checkbox" id="is_completed_{{ task.item_id | replace('.', '_') }}" name="is_completed_{{ task.item_id | replace('.', '_') }}" {% if task.is_completed %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_completed_{{ task.item_id | replace('.', '_') }}">Completed</label>
                                     </div>
-
-                                    {# Display calculated planned hours for parent tasks (level > 0 and has subtasks) #}
-                                    {% if task.subtasks %}
-                                        <div class="mb-2 text-end ms-auto">
-                                            <strong class="text-muted">Subtask Sum:</strong>
-                                            <span class="fs-6 fw-bold text-info">
-                                                {{ "%.1f" | format(task.calculated_planned_hours) if task.calculated_planned_hours is not none else "N/A" }} hrs
-                                            </span>
-                                        </div>
-                                    {% endif %}
                                 </div>
                             {% else %}
-                                {# Main Project Description #}
                                 <div class="task-options mb-1 mx-auto fs-6 fw-bold i">
                                     "{{ project_details.description }}"
                                 </div>
                             {% endif %}
-
+                            
+                            <!-- ** FIX 1 **: Only render the subtask list div if there are actual subtasks -->
                             {% if task.subtasks %}
                             <div class="subtask-list">
                                 {% for subtask in task.subtasks %}
@@ -407,174 +266,261 @@
                     </div>
                 {% endmacro %}
     
-
-                {% for task in tasks %} {# There's only ever going to be one task, given the output of the build_task_tree function is a list of 1 dictionary, which represents the project, and has a "subtasks" key, with the rest of the info. Maybe I should restructure this.#}
-                    {{ render_task_item(task, 0) }} {# Initial call for main tasks with level 0 #}
+                {% for task in tasks %}
+                    {{ render_task_item(task, 0) }}
                 {% endfor %}
             </div>
             <button type="submit" class="btn btn-success mt-3">
                 <i class="fa-regular fa-floppy-disk"></i>
-                Save</button>
+                Save
+            </button>
         </form>
     </div>
 
     <div id="alertMessage" class="alert-message"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
     <script>
+        // No changes needed to the JavaScript for these layout fixes.
         document.addEventListener('DOMContentLoaded', function() {
+            let newItemIdCounter = 0;
+            const deletedItemIds = new Set();
+            const MAX_SUBTASK_LEVEL = 6;
 
-            // Counter for generating unique temporary IDs for new tasks/subtasks
-            let newTaskIdCounter = 0;
+            attachEventListeners(document);
 
-            // Store IDs of tasks marked for deletion
-            const deletedTaskIds = new Set();
+            document.querySelectorAll('.completed-checkbox').forEach(checkbox => {
+                const taskCard = checkbox.closest('.card');
+                if (taskCard && checkbox.checked) {
+                    applyCompletionStyles(taskCard, true);
+                }
+            });
 
-            // Maximum allowed subtask level (0-indexed, so level 6 means 7 levels deep including the project)
-            const MAX_SUBTASK_LEVEL = 6; 
+            document.querySelectorAll('.task-list, .subtask-list').forEach(initSortable);
+            
+            const taskManagerForm = document.getElementById('task-manager-form');
+            taskManagerForm.addEventListener('submit', handleFormSubmit);
 
-            /**
-             * Displays a temporary alert message to the user.
-             * @param {string} message - The message to display.
-             */
+            function initSortable(listEl) {
+                new Sortable(listEl, {
+                    group: 'nested-tasks',
+                    animation: 150,
+                    handle: '.drag-handle',
+                    fallbackOnBody: true,
+                    swapThreshold: 0.65,
+                    onAdd: function (evt) {
+                        const item = evt.item;
+                        const newParentCard = item.closest('.card:not([data-item-id="' + item.dataset.itemId + '"])');
+                        const newParentId = newParentCard ? newParentCard.dataset.itemId : '';
+                        item.dataset.parentItemId = newParentId;
+                    }
+                });
+            }
+
+            function collectTaskData(container) {
+                const items = [];
+                container.querySelectorAll(':scope > .card').forEach((card, index) => {
+                    const itemId = card.dataset.itemId;
+                    const parentItemId = card.dataset.parentItemId || null;
+                    const level = parseInt(card.dataset.level, 10);
+
+                    if (level > 0) {
+                        const name = card.querySelector(`input[id^="name_"]`).value;
+                        const description = card.querySelector(`textarea[id^="description_"]`).value;
+                        const dueDate = card.querySelector(`input[id^="due_date_"]`).value;
+                        const isCompleted = card.querySelector(`input[id^="is_completed_"]`).checked;
+                        const plannedHours = card.querySelector(`input[id^="planned_hours_"]`).value;
+                        
+                        // **Important**: We still need to look for a subtask-list div for newly added tasks
+                        let subtasks = [];
+                        const subtaskListContainer = card.querySelector('.subtask-list');
+                        if (subtaskListContainer) {
+                           subtasks = collectTaskData(subtaskListContainer);
+                        }
+
+                        const itemObject = {
+                            item_id: itemId,
+                            parent_item_id: parentItemId,
+                            name: name,
+                            description: description,
+                            due_date: dueDate || null,
+                            is_completed: isCompleted,
+                            planned_hours: plannedHours || null,
+                            display_order: index,
+                            subtasks: subtasks
+                        };
+                        items.push(itemObject);
+                    }
+                });
+                if (container.classList.contains('task-list')) {
+                    const rootCard = container.querySelector(':scope > .card');
+                    if (rootCard) {
+                        const subtaskList = rootCard.querySelector('.subtask-list');
+                        if (subtaskList) {
+                            return collectTaskData(subtaskList);
+                        }
+                    }
+                    return [];
+                }
+                return items;
+            }
+
+            async function handleFormSubmit(event) {
+                event.preventDefault();
+                const projectId = document.getElementById('project_id').value;
+                const tasksData = collectTaskData(document.querySelector('.task-list'));
+                const payload = {
+                    project_id: projectId,
+                    tasks: tasksData,
+                    deleted_item_ids: Array.from(deletedItemIds)
+                };
+
+                try {
+                    const response = await fetch('/save-tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        showAlert(`Failed to save tasks: ${result.error || 'Unknown error'}`);
+                    }
+                } catch (error) {
+                    showAlert('Error saving tasks. Please check your connection.');
+                }
+            }
+            
+            function attachEventListeners(container) {
+                container.addEventListener('click', function(event) {
+                    const addBtn = event.target.closest('.add-subtask-btn');
+                    const deleteBtn = event.target.closest('.delete-task-btn');
+                    const toggleBtn = event.target.closest('.toggle-subtasks-btn');
+                    if (addBtn) handleAddSubtask(addBtn);
+                    if (deleteBtn) handleDeleteTask(deleteBtn);
+                    if (toggleBtn) handleMinimizeToggle(toggleBtn);
+                });
+                container.addEventListener('change', function(event) {
+                    const checkbox = event.target.closest('.completed-checkbox');
+                    if (checkbox) handleCompletionChange(checkbox);
+                });
+            }
+
+            function handleAddSubtask(button) {
+                const parentCard = button.closest('.card');
+                if (!parentCard) return;
+                const parentLevel = parseInt(parentCard.dataset.level, 10);
+                const newLevel = parentLevel + 1;
+                if (newLevel > MAX_SUBTASK_LEVEL) {
+                    showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
+                    return;
+                }
+                const parentId = parentCard.dataset.itemId;
+                const newId = `new-${++newItemIdCounter}`;
+                const newSubtaskHtml = generateTaskHtml(newId, parentId, newLevel);
+                
+                // Find or create the subtask list container
+                let subtaskList = parentCard.querySelector('.subtask-list');
+                if (!subtaskList) {
+                    // If the parent had no subtasks initially, the div won't exist, so create it.
+                    const newSubtaskListDiv = document.createElement('div');
+                    newSubtaskListDiv.className = 'subtask-list';
+                    // Insert it after the task-options div
+                    parentCard.querySelector('.task-options').after(newSubtaskListDiv);
+                    subtaskList = newSubtaskListDiv;
+                    initSortable(subtaskList); // Initialize sortable on the new list
+                }
+
+                subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
+                if(subtaskList.classList.contains('subtask-list-collapsed')) {
+                    const toggleBtn = parentCard.querySelector('.toggle-subtasks-btn');
+                    if (toggleBtn) handleMinimizeToggle(toggleBtn);
+                }
+            }
+
+            function handleDeleteTask(button) {
+                const cardToDelete = button.closest('.card');
+                if (cardToDelete) {
+                    const itemId = cardToDelete.dataset.itemId;
+                    if (!itemId.startsWith('new-')) {
+                        deletedItemIds.add(itemId);
+                    }
+                    cardToDelete.remove();
+                }
+            }
+
+            function handleCompletionChange(checkbox) {
+                const taskCard = checkbox.closest('.card');
+                if (!taskCard) return;
+                const isCompleted = checkbox.checked;
+                applyCompletionStyles(taskCard, isCompleted);
+                if (isCompleted) {
+                    propagateCompletionDownwards(taskCard.querySelector('.subtask-list'), true);
+                } else {
+                    propagateUncompletionUpwards(taskCard);
+                }
+            }
+            
+            function handleMinimizeToggle(button) {
+                const taskCard = button.closest('.card');
+                const taskOptions = taskCard.querySelector('.task-options');
+                const subtaskList = taskCard.querySelector('.subtask-list');
+                const collapseIcon = button.querySelector('.collapse-icon');
+                taskOptions.classList.toggle('task-options-small-mode');
+                if (subtaskList) subtaskList.classList.toggle('subtask-list-collapsed');
+                collapseIcon.innerHTML = taskOptions.classList.contains('task-options-small-mode') ? '&#9650;' : '&#9660;';
+            }
+
+            function generateTaskHtml(itemId, parentItemId, level) {
+                const htmlId = itemId.replace(/[.-]/g, '_');
+                const addBtn = level < MAX_SUBTASK_LEVEL ? `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>` : '';
+                // Note: The new task always gets an empty subtask-list div so it can become a drop target.
+                return `
+                <div class="card subtask-level-${level} mb-1" data-item-id="${itemId}" data-parent-item-id="${parentItemId}" data-level="${level}">
+                    <div class="card-body">
+                        <div class="task-header">
+                            <span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" class="form-control" id="name_${htmlId}" name="name_${htmlId}" placeholder="Subtask Name">
+                                <label for="name_${htmlId}">Subtask Name</label>
+                            </div>
+                            ${addBtn}
+                            <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn"><span class="collapse-icon">&#9660;</span></button>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <div class="task-options mb-1 d-flex flex-wrap align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
+                                <label for="planned_hours_${htmlId}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label>
+                                <input type="number" min="0" step="0.1" class="form-control form-control-sm flex-grow-1" id="planned_hours_${htmlId}" name="planned_hours_${htmlId}" placeholder="0.0">
+                            </div>
+                            <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
+                                <label for="due_date_${htmlId}" class="form-label small mb-0 text-nowrap">Due Date:</label>
+                                <input type="date" class="form-control form-control-sm flex-grow-1" id="due_date_${htmlId}" name="due_date_${htmlId}">
+                            </div>
+                            <div class="form-floating flex-grow-1 w-100">
+                                <textarea class="form-control" placeholder="Description" id="description_${htmlId}" name="description_${htmlId}" style="height: 100px;"></textarea>
+                                <label for="description_${htmlId}">Description</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input completed-checkbox" id="is_completed_${htmlId}" name="is_completed_${htmlId}">
+                                <label class="form-check-label" for="is_completed_${htmlId}">Completed</label>
+                            </div>
+                        </div>
+                        <div class="subtask-list"></div>
+                    </div>
+                </div>`;
+            }
+
             function showAlert(message) {
                 const alertBox = document.getElementById('alertMessage');
                 alertBox.textContent = message;
                 alertBox.style.display = 'block';
-                // Restart the animation
                 alertBox.style.animation = 'none';
-                void alertBox.offsetWidth; // Trigger reflow
+                void alertBox.offsetWidth;
                 alertBox.style.animation = 'fadeOut 4s forwards';
             }
-
-            /**
-             * Generates a new unique temporary ID for a task or subtask.
-             * These are client-side IDs, not database IDs.
-             * @returns {string} A unique temporary task ID (e.e., "new-1", "new-2").
-             */
-            function generateNewTemporaryTaskId() {
-                return `new-${++newTaskIdCounter}`;
-            }
-
-            /**
-             * Generates the HTML string for a new task or subtask.
-             * @param {string} taskId - The unique ID for the new task/subtask (temporary or existing).
-             * @param {string|null} parentTaskId - The ID of the parent task, or null for a main task.
-             * @param {number} level - The nesting level of the task (0 for main, 1 for subtask, etc.).
-             * @returns {string} The HTML string for the task item.
-             */
-            function generateTaskHtml(taskId, parentTaskId, level) {
-
-                // Replace dots or hyphens in ID for HTML element IDs
-                const htmlId = taskId.replace(/[.-]/g, '_');
-                const cardClass = `subtask-level-${level}`;
-
-                let taskNameAndInputHtml = '';
-                let addSubtaskButtonInHeader = '';
-                let deleteButtonHtml = '';
-                let addSubtaskButtonInFooter = '';
-                let descriptionLabel = '';
-                let minimizeButtonHtml = '';
-                let dueDateFieldHtml = ''; // Initialize here
-                let plannedHoursFieldHtml = ''; // Initialize here
-                let descriptionFieldHtml = ''; // Initialize here
-                let completedCheckboxHtml = ''; // Initialize here
-
-                if (level > 0) {
-                    taskNameAndInputHtml = `
-                        <div class="form-floating flex-grow-1">
-                            <input type="text" class="form-control" id="task_name_${htmlId}" name="task_name_${htmlId}" value="" placeholder="Subtask Name">
-                            <label for="task_name_${htmlId}">Subtask Name</label>
-                        </div>
-                    `;
-                    plannedHoursFieldHtml = `
-                        <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
-                            <label for="planned_hours_${htmlId}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label>
-                            <input type="number" min="0" step="0.1" class="form-control form-control-sm flex-grow-1"
-                                id="planned_hours_${htmlId}"
-                                name="planned_hours_${htmlId}"
-                                value=""
-                                placeholder="0.0">
-                        </div>
-                    `;
-                    dueDateFieldHtml = `
-                        <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
-                            <label for="due_date_${htmlId}" class="form-label small mb-0 text-nowrap">Due Date:</label>
-                            <input type="date" class="form-control form-control-sm flex-grow-1" id="due_date_${htmlId}" name="due_date_${htmlId}" value="" placeholder="YYYY-MM-DD">
-                        </div>
-                    `;
-                    // Only show add subtask button if not at the maximum allowed level
-                    if (level < MAX_SUBTASK_LEVEL) {
-                        addSubtaskButtonInHeader = `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>`;
-                    }
-                    deleteButtonHtml = `<button type="button" class="btn btn-sm btn-outline-danger delete-task-btn"><i class="fa-solid fa-trash"></i></button>`;
-                    descriptionLabel = 'Description';
-                    descriptionFieldHtml = `
-                        <div class="form-floating flex-grow-1 w-100">
-                            <textarea class="form-control" placeholder="${descriptionLabel}" id="description_${htmlId}" name="description_${htmlId}" style="height: 100px;"></textarea>
-                            <label for="description_${htmlId}">${descriptionLabel}</label>
-                        </div>
-                    `;
-                    completedCheckboxHtml = `
-                        <div class="form-check mb-2">
-                            <input type="checkbox" class="form-check-input completed-checkbox" id="completed_${htmlId}" name="completed_${htmlId}">
-                            <label class="form-check-label" for="completed_${htmlId}">Completed</label>
-                        </div>
-                    `;
-                } else {
-                    taskNameAndInputHtml = `
-                        <h2 class="mb-0 fs-15 fw-bold project-name-centered">{{ project_name }}</h2>
-                    `;
-                    // The "Add Subtask" button for level 0 is in the footer and always present
-                    addSubtaskButtonInFooter = `
-                                <div class="d-flex justify-content-center mt-3">
-                                    <button type="button" class="btn btn-primary add-subtask-btn px-4">
-                                        <i class="fa-solid fa-plus me-2"></i> Add Subtask
-                                    </button>
-                                </div>
-                    `;
-                    // For level 0, the description is displayed from project_details.description and not editable here.
-                    descriptionFieldHtml = `<div class="task-options mb-1 mx-auto fs-6 fw-bold i">{{ project_details.description }}</div>`;
-                }
-
-                // Minimize/Maximize button logic (always present for tasks that can have subtasks, i.e., level > 0)
-                // Default to expanded state (down arrow)
-                if (level > 0) { // Only subtasks can be minimized/maximized
-                    minimizeButtonHtml = `
-                        <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn">
-                            <span class="collapse-icon">&#9660;</span>
-                        </button>
-                    `;
-                }
-
-
-                return `
-                    <div class="card ${cardClass} mb-1" data-task-id="${taskId}" data-parent-task-id="${parentTaskId || ''}" data-level="${level}">
-                        <div class="card-body">
-                            <div class="task-header">
-                                ${taskNameAndInputHtml}
-                                ${level > 0 ? plannedHoursFieldHtml : ''}
-                                ${level > 0 ? dueDateFieldHtml : ''}
-                                ${addSubtaskButtonInHeader}
-                                ${minimizeButtonHtml}
-                                ${deleteButtonHtml}
-                            </div>
-                            <div class="task-options mb-1 d-flex flex-wrap align-items-center gap-2">
-                                ${descriptionFieldHtml}
-                                ${level > 0 ? completedCheckboxHtml : ''}
-                            </div>
-                            <div class="subtask-list">
-                                </div>
-                            ${addSubtaskButtonInFooter}
-                        </div>
-                    </div>
-                `;
-            }
-
-            /**
-             * Applies or removes the 'completed-task' class and strikethrough based on checkbox state.
-             * @param {HTMLElement} taskCard - The task's card element.
-             * @param {boolean} isCompleted - True if the task is completed, false otherwise.
-             */
             function applyCompletionStyles(taskCard, isCompleted) {
                 if (isCompleted) {
                     taskCard.classList.add('completed-task');
@@ -582,341 +528,29 @@
                     taskCard.classList.remove('completed-task');
                 }
             }
-
-            /**
-             * Recursively checks/unchecks subtasks and applies/removes completion styles.
-             * @param {HTMLElement} subtaskListContainer - The .subtask-list element of the parent task.
-             * @param {boolean} isCompleted - The completion status to propagate.
-             */
             function propagateCompletionDownwards(subtaskListContainer, isCompleted) {
-                if (!subtaskListContainer) {
-                    return; // No subtasks to propagate to
-                }
-
+                if (!subtaskListContainer) return;
                 subtaskListContainer.querySelectorAll(':scope > .card').forEach(subtaskCard => {
                     const checkbox = subtaskCard.querySelector('.completed-checkbox');
                     if (checkbox && checkbox.checked !== isCompleted) {
-                        checkbox.checked = isCompleted; // Update checkbox state
-                        applyCompletionStyles(subtaskCard, isCompleted); // Apply styles
+                        checkbox.checked = isCompleted;
+                        applyCompletionStyles(subtaskCard, isCompleted);
                     }
-
-                    // Recursively call for nested subtasks
                     const nestedSubtaskList = subtaskCard.querySelector('.subtask-list');
                     propagateCompletionDownwards(nestedSubtaskList, isCompleted);
                 });
             }
-
-            /**
-             * Recursively unchecks parent tasks and removes their completion styles.
-             * @param {HTMLElement} currentTaskCard - The card element of the task that was unchecked.
-             */
             function propagateUncompletionUpwards(currentTaskCard) {
-                console.log('Propagating uncompletion upwards from task:', currentTaskCard.dataset.taskId);
-
-                // Find the immediate DOM parent task card
-                // The structure is: currentTaskCard -> .subtask-list -> .card (parent)
                 let parentCard = currentTaskCard.closest('.subtask-list')?.closest('.card');
-
                 if (parentCard) {
-                    console.log('Found DOM parent card:', parentCard.dataset.taskId);
                     const parentCheckbox = parentCard.querySelector('.completed-checkbox');
-                    if (parentCheckbox) { // Ensure the parent card has a checkbox
-                        if (parentCheckbox.checked) { // Only uncheck if it's currently checked
-                            console.log('Unchecking parent:', parentCard.dataset.taskId);
-                            parentCheckbox.checked = false; // Uncheck parent
-                            applyCompletionStyles(parentCard, false); // Remove parent's completion styles
-                            propagateUncompletionUpwards(parentCard); // Recurse upwards
-                        } else {
-                            console.log('Parent', parentCard.dataset.taskId, 'is already unchecked. Stopping further propagation upwards from this path.');
-                        }
-                    } else {
-                        console.log('No checkbox found for parent card:', parentCard.dataset.taskId, '. Stopping propagation upwards from this path.');
-                    }
-                } else {
-                    console.log('No direct DOM parent task card found for task:', currentTaskCard.dataset.taskId, '. Stopping propagation.');
-                }
-            }
-
-
-            /**
-             * Event handler for 'completed' checkbox changes.
-             * @param {Event} event - The change event object.
-             */
-            function handleCompletionChange(event) {
-                const checkbox = event.target;
-                const taskCard = checkbox.closest('.card');
-                if (!taskCard) {
-                    console.error('Could not find parent task card for checkbox.');
-                    return;
-                }
-
-                const isCompleted = checkbox.checked;
-                applyCompletionStyles(taskCard, isCompleted);
-
-                // If a task is marked complete, propagate to its subtasks
-                if (isCompleted) {
-                    const subtaskListContainer = taskCard.querySelector('.subtask-list');
-                    propagateCompletionDownwards(subtaskListContainer, isCompleted);
-                } else {
-                    // If a task is marked incomplete, propagate this change upwards
-                    propagateUncompletionUpwards(taskCard);
-                }
-            }
-
-            /**
-             * Event handler for minimizing/maximizing subtask lists.
-             * @param {Event} event - The click event object.
-             */
-            function handleMinimizeToggle(event) {
-                const toggleButton = event.target.closest('.toggle-subtasks-btn');
-                const taskCard = toggleButton.closest('.card');
-                if (!taskCard) {
-                    console.error('Could not find parent task card for toggle button.');
-                    return;
-                }
-
-                const taskOptions = taskCard.querySelector('.task-options');
-                const collapseIcon = toggleButton.querySelector('.collapse-icon');
-                const subtaskList = taskCard.querySelector('.subtask-list'); // Get the actual subtask list
-
-                if (taskOptions && subtaskList) {
-                    taskOptions.classList.toggle('task-options-small-mode');
-                    subtaskList.classList.toggle('subtask-list-collapsed'); // Toggle collapse class
-
-                    if (taskOptions.classList.contains('task-options-small-mode')) {
-                        collapseIcon.innerHTML = '&#9650;'; // up arrow = minimized
-                    } else {
-                        collapseIcon.innerHTML = '&#9660;'; // down arrow = expanded
+                    if (parentCheckbox && parentCheckbox.checked) {
+                        parentCheckbox.checked = false;
+                        applyCompletionStyles(parentCard, false);
+                        propagateUncompletionUpwards(parentCard);
                     }
                 }
             }
-
-
-
-            /**
-             * Attaches event listeners to 'Add Subtask', 'Delete', and 'Completed' checkboxes
-             * and 'Minimize/Maximize' buttons within a given container.
-             * This function is called for initial page load and for newly added tasks/subtasks.
-             * @param {HTMLElement} container - The DOM element to search for buttons and checkboxes within.
-             */
-            function attachEventListeners(container) {
-                // Attach 'Add Subtask' event listeners
-                container.querySelectorAll('.add-subtask-btn').forEach(button => {
-                    button.removeEventListener('click', handleAddSubtask); // Prevent duplicate listeners
-                    button.addEventListener('click', handleAddSubtask);
-                });
-
-                // Attach 'Delete Task' event listeners
-                container.querySelectorAll('.delete-task-btn').forEach(button => {
-                    button.removeEventListener('click', handleDeleteTask); // Prevent duplicate listeners
-                    button.addEventListener('click', handleDeleteTask);
-                });
-
-                // Attach 'Completed' checkbox event listeners
-                container.querySelectorAll('.completed-checkbox').forEach(checkbox => {
-                    checkbox.removeEventListener('change', handleCompletionChange); // Prevent duplicate listeners
-                    checkbox.addEventListener('change', handleCompletionChange);
-                });
-
-                // Attach 'Minimize/Maximize' button event listeners
-                container.querySelectorAll('.toggle-subtasks-btn').forEach(button => {
-                    button.removeEventListener('click', handleMinimizeToggle); // Prevent duplicate listeners
-                    button.addEventListener('click', handleMinimizeToggle);
-                });
-            }
-
-            /**
-             * Event handler for 'Add Subtask' button clicks.
-             * @param {Event} event - The click event object.
-             */
-            function handleAddSubtask(event) {
-                const parentTaskCard = event.target.closest('.card');
-                if (!parentTaskCard) {
-                    console.error('Could not find parent task card.');
-                    return;
-                }
-
-                const parentLevel = parseInt(parentTaskCard.dataset.level || '0', 10); // Get parent's level, default to 0
-                const newSubtaskLevel = parentLevel + 1; // Increment level for the new subtask
-
-                // Enforce the 6-level limit
-                if (newSubtaskLevel > MAX_SUBTASK_LEVEL) {
-                    showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
-                    return; 
-                }
-
-                const parentTaskId = parentTaskCard.dataset.taskId;
-                const newSubtaskId = generateNewTemporaryTaskId();
-                const newSubtaskHtml = generateTaskHtml(newSubtaskId, parentTaskId, newSubtaskLevel); // Pass new level
-
-                let subtaskList = parentTaskCard.querySelector('.subtask-list');
-                if (!subtaskList) {
-                    subtaskList = document.createElement('div');
-                    subtaskList.classList.add('subtask-list');
-                    parentTaskCard.querySelector('.card-body').appendChild(subtaskList);
-                }
-
-                // Insert the new subtask HTML
-                subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
-
-                // Get the newly added subtask card and attach its event listeners
-                const newlyAddedSubtask = subtaskList.lastElementChild;
-                attachEventListeners(newlyAddedSubtask);
-
-                // Ensure the subtask list is visible when a new subtask is added
-                if (subtaskList.classList.contains('subtask-list-collapsed')) {
-                    subtaskList.classList.remove('subtask-list-collapsed');
-                    // Update the toggle button icon
-                    const toggleButton = parentTaskCard.querySelector('.toggle-subtasks-btn');
-                    if (toggleButton) {
-                        toggleButton.querySelector('.collapse-icon').innerHTML = '&#9660;'; // Down arrow (expanded)
-                    }
-                }
-
-                // Check if the parent task is completed and the new subtask is not
-                const parentCheckbox = parentTaskCard.querySelector('.completed-checkbox');
-                const newSubtaskCheckbox = newlyAddedSubtask.querySelector('.completed-checkbox');
-
-                if (parentCheckbox && parentCheckbox.checked && newSubtaskCheckbox && !newSubtaskCheckbox.checked) {
-                    console.log('New uncompleted subtask added. Unchecking direct parent:', parentTaskCard.dataset.taskId);
-                    parentCheckbox.checked = false; // Explicitly uncheck the direct parent
-                    applyCompletionStyles(parentTaskCard, false); // Apply uncompletion styles to the direct parent
-
-                    // Now, propagate uncompletion upwards from this direct parent to its ancestors
-                    propagateUncompletionUpwards(parentTaskCard);
-                }
-            }
-
-            /**
-             * Event handler for 'Delete Task' button clicks.
-             * @param {Event} event - The click event object.
-             */
-            function handleDeleteTask(event) {
-                const taskCardToDelete = event.target.closest('.card');
-                if (taskCardToDelete) {
-                    const taskId = taskCardToDelete.dataset.taskId;
-                    // Only add to deletedTaskIds if it's an existing (numeric) ID
-                    if (!taskId.startsWith('new-')) {
-                        deletedTaskIds.add(taskId);
-                    }
-                    taskCardToDelete.remove();
-                } else {
-                    console.error('Could not find task card to delete.');
-                }
-            }
-
-            /**
-             * Recursively collects task data from the DOM into a structured array.
-             * @param {HTMLElement} container - The parent container to search for tasks (e.g., .task-list or .subtask-list).
-             * @returns {Array} An array of task objects, each potentially containing 'subtasks'.
-             */
-            function collectTaskData(container) {
-                const tasks = [];
-                container.querySelectorAll(':scope > .card').forEach(card => { // :scope ensures only immediate children
-                    const taskId = card.dataset.taskId;
-                    const parentTaskId = card.dataset.parentTaskId || null;
-                    const level = parseInt(card.dataset.level || '0', 10); // Get level from data attribute
-
-                    let taskName;
-                    let description;
-                    let dueDate;
-                    let completed;
-                    let plannedHours; // Added plannedHours
-
-                    if (level === 0) {
-                        // For level 0, the task name is displayed in the h2.
-                        taskName = card.querySelector('.task-header h2').textContent;
-                        // For level 0, description, due_date, completed, and planned_hours are not editable or managed via this form,
-                        // so we don't try to read them from inputs. They are read from the initial project_details.
-                        description = document.querySelector('.task-options.mb-1.mx-auto.fs-6.fw-bold.i').textContent.trim().replace(/^"|"$/g, '');
-                        dueDate = null; // No due date input for project task here
-                        completed = false; // Project task itself is not "completed" in this sense
-                        plannedHours = null ; // No planned hours input for project task here
-                    } else {
-                        // For subtasks (level > 0), get from the visible text inputs
-                        taskName = card.querySelector('input[type="text"]').value;
-                        description = card.querySelector('textarea').value;
-                        dueDate = card.querySelector('input[type="date"]').value;
-                        completed = card.querySelector('input[type="checkbox"]').checked;
-                        plannedHours = card.querySelector('input[name^="planned_hours_"]').value; // Get planned hours
-                    }
-
-                    const subtaskListContainer = card.querySelector('.subtask-list');
-                    const subtasks = subtaskListContainer ? collectTaskData(subtaskListContainer) : [];
-
-                    // Only include planned_hours if it's not the top-level task (level 0)
-                    const taskObject = {
-                        id: taskId,
-                        parent_id: parentTaskId,
-                        name: taskName,
-                        description: description,
-                        due_date: dueDate,
-                        completed: completed,
-                        subtasks: subtasks
-                    };
-                    if (level > 0) {
-                        taskObject.planned_hours = plannedHours;
-                    }
-
-                    tasks.push(taskObject);
-                });
-                return tasks;
-            }
-
-            // Handle form submission
-            const taskManagerForm = document.getElementById('task-manager-form');
-            taskManagerForm.addEventListener('submit', async function(event) {
-                event.preventDefault(); // Prevent default form submission
-
-                const projectId = document.getElementById('project_id').value;
-                const tasksData = collectTaskData(document.querySelector('.task-list'));
-
-                const payload = {
-                    project_id: projectId,
-                    tasks: tasksData,
-                    deleted_task_ids: Array.from(deletedTaskIds) // Convert Set to Array
-                };
-
-                try {
-                    const response = await fetch('/save-tasks', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        // For simplicity, reload the page to show updated IDs from the database
-                        // In a more complex app, you might update the client-side IDs from the 'result'
-                        console.log('Save successful:', result);
-                        window.location.reload(); // Reload to fetch tasks with actual database IDs
-                    } else {
-                        console.error('Failed to save tasks:', result.error);
-                        // Show an error message to the user
-                        showAlert(`Failed to save tasks: ${result.error || 'Unknown error'}`);
-                    }
-                } catch (error) {
-                    console.error('Error during fetch:', error);
-                    // Show a network error message
-                    showAlert('Error saving tasks. Please check your connection.');
-                }
-            });
-
-            // Initial attachment of event listeners to all existing buttons and checkboxes on page load
-            attachEventListeners(document);
-
-            // Apply initial completion styles on page load for already completed tasks
-            document.querySelectorAll('.completed-checkbox').forEach(checkbox => {
-                const taskCard = checkbox.closest('.card');
-                if (taskCard && checkbox.checked) {
-                    applyCompletionStyles(taskCard, true);
-                }
-            });
         });
     </script>
-
-
-{% endblock %}  
+{% endblock %}
