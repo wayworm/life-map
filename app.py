@@ -7,6 +7,21 @@ import traceback
 import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 
+
+# TODO: Link to Google Calendar.
+# TODO: Logic to disallow a subtask to have more hours attributed to it than it's parent task.
+# TODO: Make nav bar stick to top of page when scrolling down.
+
+# DONE:
+# TODO: Project pages due date --> years, months, weeks, days dependings on timescale 
+# TODO: Add functionality to reorder the tasks by drag and drop.
+# TODO: Add a maximum value of 6 layers of subtasks. Present a message to screen if they try to go deeper.
+# TODO: make the drag and drop easier to work with - it's hard to turn something into a subtask 
+#       if the target parent doesn't already have a subtask
+# TODO: Add a way to track whether something was minimsed, so it doesn't default to open.
+# TODO: if a task is completed, it's minimisation behaviour should change, so the whole card hides, and we have a button to reshow hidden cards
+
+
 # Configure application
 app = Flask(__name__)
 
@@ -41,6 +56,8 @@ def build_task_tree(tasks_flat_list):
         task_dict['item_id'] = task_dict['item_id']
         task_dict['parent_item_id'] = task_dict['parent_item_id']
         task_dict['is_completed'] = bool(task_dict['is_completed'])
+        # ✨ ADDITION: Handle the new is_minimized state
+        task_dict['is_minimized'] = bool(task_dict['is_minimized'])
         task_dict['subtasks'] = []
         task_dict['planned_hours'] = task_dict['planned_hours']
         task_map[task_dict['item_id']] = task_dict
@@ -405,12 +422,13 @@ def save_tasks():
         id_map = {}
         def process_task_list(task_list, parent_db_id=None):
             for task in task_list:
-                # ** FIX **: Use keys that match the JS payload
                 client_id = task["item_id"]
                 name = task["name"]
                 description = task.get("description")
                 due_date = task.get("due_date") or None
                 is_completed = 1 if task.get("is_completed", False) else 0
+                # ✨ ADDITION: Get the is_minimized state from the payload
+                is_minimized = 1 if task.get("is_minimized", False) else 0
                 display_order = task.get("display_order", 0)
                 
                 planned_hours_input = task.get("planned_hours")
@@ -423,22 +441,24 @@ def save_tasks():
 
                 current_db_id = None
                 if isinstance(client_id, str) and client_id.startswith("new-"):
+                    # ✨ MODIFICATION: Add is_minimized to the INSERT statement
                     cursor.execute("""
-                        INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, display_order, planned_hours)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (project_id, parent_db_id, name, description, due_date, is_completed, display_order, planned_hours_to_save))
+                        INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, display_order, planned_hours, is_minimized)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (project_id, parent_db_id, name, description, due_date, is_completed, display_order, planned_hours_to_save, is_minimized))
                     new_db_id = cursor.lastrowid
                     id_map[client_id] = new_db_id
                     current_db_id = new_db_id
                 
                 elif str(client_id).isdigit():
                     current_db_id = int(client_id)
+                    # ✨ MODIFICATION: Add is_minimized to the UPDATE statement
                     cursor.execute("""
                         UPDATE work_items
                         SET name = ?, description = ?, due_date = ?, is_completed = ?,
-                            display_order = ?, parent_item_id = ?, planned_hours = ?
+                            display_order = ?, parent_item_id = ?, planned_hours = ?, is_minimized = ?
                         WHERE item_id = ? AND project_id = ?
-                    """, (name, description, due_date, is_completed, display_order, parent_db_id, planned_hours_to_save, current_db_id, project_id))
+                    """, (name, description, due_date, is_completed, display_order, parent_db_id, planned_hours_to_save, is_minimized, current_db_id, project_id))
                 
                 else:
                     continue
@@ -446,8 +466,6 @@ def save_tasks():
                 if current_db_id and task.get("subtasks"):
                     process_task_list(task["subtasks"], current_db_id)
 
-        # The root of the project is parent_item_id=NULL in the DB.
-        # Find the root work_item for this project to use as the initial parent.
         cursor.execute("SELECT item_id FROM work_items WHERE project_id = ? AND parent_item_id IS NULL", (project_id,))
         root_item = cursor.fetchone()
         root_item_id = root_item['item_id'] if root_item else None
