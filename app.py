@@ -1,9 +1,12 @@
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from flask import Flask, flash, redirect, render_template, request, session, g, jsonify
 from flask_session import Session
 from functools import wraps
 import traceback
 import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
+
 
 # TODO: Add a maximum value of 6 layers of subtasks. Present a message to screen if they try to go deeper.
 
@@ -144,6 +147,28 @@ def get_username(user_id):
     close_db()
 
     return username[0]
+
+def format_date_difference(target_date_str: str) -> str:
+    
+    # Parse input
+    target_date = date.fromisoformat(target_date_str)
+    today = date.today()
+
+    # Get the difference
+    delta = relativedelta(target_date, today)
+
+    if target_date < today:
+        return "Date has passed"
+
+    parts = []
+    if delta.years:
+        parts.append(f"{delta.years} year{'s' if delta.years != 1 else ''}")
+    if delta.months:
+        parts.append(f"{delta.months} month{'s' if delta.months != 1 else ''}")
+    if delta.days:
+        parts.append(f"{delta.days} day{'s' if delta.days != 1 else ''}")
+
+    return " ".join(parts) or "Today"
 
 
 @app.teardown_appcontext
@@ -656,6 +681,8 @@ def tasks(project_id):
         project_details=project_details)
 
 
+
+
 @app.route("/projects", methods=["GET", "POST"])
 @login_required
 def projects_list():
@@ -670,7 +697,7 @@ def projects_list():
         cursor.execute("""SELECT *
                           FROM projects
                           WHERE user_id = ?
-                          ORDER BY name ASC""", (user_id,))  # Order projects by name
+                          ORDER BY end_date ASC""", (user_id,))  # Order projects by name
 
         rows = cursor.fetchall()
         rows_list = []
@@ -678,10 +705,21 @@ def projects_list():
         for row in rows:
             rows_list.append(dict(row))  # Convert each Row object to a dict
 
+        for row in rows_list:
+            row["readable_due_date"] = format_date_difference(row["end_date"])
+
+        # due this week
+        this_week = [f"{i} day{'s' if i != 1 else ''}" for i in range(7)]
+
+        if row["readable_due_date"] in this_week:
+            print(this_week)
+
+
         return render_template(
             "projects.html",
             projects=rows_list,
-            username=get_username(user_id))  # Renamed 'rows' to 'projects' for clarity
+            username=get_username(user_id),
+            this_week=this_week)  # Renamed 'rows' to 'projects' for clarity
 
     else:
         return error_page("Request Error, Only GET requests accepted.", 403)

@@ -85,7 +85,7 @@
                     <tr>
                         <th scope="col">Project</th>
                         <th scope="col">Description</th>
-                        <th scope="col">Due Date</th>
+                        <th scope="col">Due</th>
                         <th scope="col">Tasks</th>
                         <th scope="col">Edit</th> {# Renamed column header #}
                     </tr>
@@ -95,8 +95,13 @@
                     <tr>
                         <td> {{ row["name"] }} </td>
                         <td> {{ row["description"] }} </td>
-                        <td> {{ row["end_date"]}}
-                        <td>
+
+                        {% if row["readable_due_date"] in this_week %}                            
+                        <td><b style="color:red;"> {{ row["readable_due_date"]}}</b><td>
+                        {% else %}
+                        <td> {{ row["readable_due_date"]}}<td>
+                        {% endif %}
+                        
                             <button class="details-button btn btn-sm btn-primary" data-project-id="{{ row["project_id"] }}">
                                 <i class="fa-solid fa-list me-1"></i> Tasks {# Changed icon to fa-list #}
                             </button>
