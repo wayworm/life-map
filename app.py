@@ -817,7 +817,10 @@ def save_tasks():
                 display_order = task.get(
                     "display_order")  
                 planned_hours = task.get("planned_hours")
+                print(planned_hours,"\n\n\n\n")
+
                 planned_hours = float(planned_hours) if planned_hours not in ['', None] else None
+                print(planned_hours,"\n\n\n\n")
 
 
                 print(

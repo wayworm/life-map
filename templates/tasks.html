@@ -729,7 +729,7 @@
                         description = card.querySelector('.task-options.mb-1.mx-auto.fs-6.fw-bold.i').textContent.trim().replace(/^"|"$/g, '');
                         dueDate = null; // No due date input for project task here
                         completed = false; // Project task itself is not "completed" in this sense
-                        plannedHours = null; // No planned hours input for project task here
+                        plannedHours = ; // No planned hours input for project task here
                     } else {
                         // For subtasks (level > 0), get from the visible text inputs
                         taskName = card.querySelector('input[type="text"]').value;
