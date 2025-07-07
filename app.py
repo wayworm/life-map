@@ -9,7 +9,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 
 # TODO: Link to Google Calendar.
-# TODO: Logic to disallow a subtask to have more hours attributed to it than it's parent task.
 
 # DONE:
 # TODO: Project pages due date --> years, months, weeks, days dependings on timescale 
@@ -21,6 +20,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 # TODO: if a task is completed, it's minimisation behaviour should change, so the whole card hides, and we have a button to reshow hidden cards
 # TODO: Subtasks can no longer be due after their parent tasks,
 # TODO: Make nav bar stick to top of page when scrolling down.
+# TODO: Logic to disallow a subtask to have more hours attributed to it than it's parent task.
+
 
 
 # Configure application
