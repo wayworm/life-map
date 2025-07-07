@@ -21,10 +21,40 @@
 
     .task-header {
         display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        align-items: center; /* Ensures vertical alignment */
+        position: relative; /* Crucial for absolute positioning of children */
+        gap: 0.5rem; /* Keep gap for the default case if level > 0 */
         margin-bottom: 0.5rem;
-        flex-wrap: wrap;
+        flex-wrap: wrap; 
+    }
+
+    /* New CSS for centering the project name specifically */
+    .project-name-centered {
+        position: absolute; /* Take it out of the flex flow */
+        left: 50%; /* Start from the middle */
+        transform: translateX(-50%); /* Move back by half its own width */
+        /* Ensure it's above other elements if necessary, though not usually needed here */
+        z-index: 1; 
+        /* Prevent the h2 from contributing to flex item width calculations in level 0. */
+        /* This allows the flex container to correctly distribute the remaining items. */
+        width: fit-content; /* Or a specific max-width if desired */
+        white-space: nowrap; /* Prevent wrapping for the title */
+    }
+
+    /* Adjustments for the planned time div for level 0 to ensure it's still visible */
+    /* This specific rule ensures that planned time is always on the right for level 0,
+    even if flex-wrap occurs. */
+    .task-header > .mb-2.text-end.ms-auto { /* Target specifically the planned time div within task-header */
+        margin-left: auto; /* Ensure it stays pushed to the right */
+        position: relative; /* Bring it into a stacking context above the absolutely positioned h2 if needed */
+        z-index: 2; /* Ensure it appears above the centered title if they overlap */
+    }
+
+    /* To prevent the "Planned Time" from wrapping *under* the absolute H2 on smaller screens,
+    we might need to ensure minimum space or use flex-grow-1 on the other elements if they exist.
+    However, for level 0, it's just the h2 and the planned time. */
+    .task-header h2 + .mb-2 { /* If the h2 and planned time are direct siblings and h2 is not level 0 */
+        margin-left: auto !important; /* Force it to the right if there are other elements */
     }
 
     .task-header input[type="text"],
@@ -240,6 +270,8 @@
         <div class="fs-6 fw-bold">Hi, {{username}}.</div>
 {% endblock %}
 
+
+
 {% block main %}
 
     <div class="container-fluid mt-5">
@@ -251,77 +283,90 @@
                     <div class="card subtask-level-{{ level }} mb-1 {% if task.completed %}completed-task{% endif %}" data-task-id="{{ task.id }}" data-parent-task-id="{{ task.parent_id if task.parent_id is defined else '' }}" data-level="{{ level }}">
                         <div class="card-body">
                             <div class="task-header">
+                                {# Project Name / Subtask Name Section #}
                                 {% if level > 0 %}
                                     <div class="form-floating flex-grow-1">
                                         <input type="text" class="form-control" id="task_name_{{ task.id | replace('.', '_') }}" name="task_name_{{ task.id | replace('.', '_') }}" value="{{ task.name }}" placeholder="Subtask Name">
                                         <label for="task_name_{{ task.id | replace('.', '_') }}">Subtask Name</label>
                                     </div>
                                 {% else %}
-                                    {# This is the main project task. Its name is static here. #}
-                                    <h2 class="flex-grow-1 mb-0 fs-15 fw-bold">{{ project_name }}</h2>
-                                    {# The hidden input for the name is likely not necessary as it's not editable here #}
-                                    {# <input type="hidden" name="task_name_{{ task.id | replace('.', '_') }}" value="{{ task.name }}"> #}
+                                    {# Project Title (Level 0): Centered using absolute positioning and flex alignment #}
+                                    <h2 class="mb-0 fs-15 fw-bold project-name-centered">{{ project_name }}</h2>
+                                    
+                                    {# Display for Planned Hours at the top level (Level 0) #}
+                                    <div class="mb-2 text-end ms-auto">
+                                        <strong class="text-muted">Planned Time:</strong>
+                                        <span class="fs-5 fw-bold text-primary">
+                                            {{ "%.1f" | format(task.calculated_planned_hours) if task.calculated_planned_hours is not none else "N/A" }}hrs
+                                        </span>
+                                    </div>
                                 {% endif %}
+                               
 
-
+                                {# Buttons for Level > 0 tasks (Add, Toggle, Delete) #}
                                 {% if level > 0 %}
-
-                                    {# input for planned hours #}
-                                <div class="mb-2" style="max-width: 120px;">
-                                    <label for="planned_hours_{{ task.id | replace('.', '_') }}" class="form-label small mb-1">Planned Hours</label>
-                                    <input type="number" min="0" step="0.1" class="form-control form-control-sm" id="planned_hours_{{ task.id | replace('.', '_') }}" name="planned_hours_{{ task.id | replace('.', '_') }}" value="{{ task.planned_hours if task.planned_hours is defined else '' }}" placeholder="Hours">
-                                </div>
-
-                                {% if task.due_date is defined %}
-                                <div class="form-floating">
-                                    <input type="date" class="form-control" id="due_date_{{ task.id | replace('.', '_') }}" name="due_date_{{ task.id | replace('.', '_') }}" value="{{ task.due_date }}" placeholder="Due Date">
-                                    <label for="due_date_{{ task.id | replace('.', '_') }}">Due Date</label>
-                                </div>
-                                {% endif %}
-
-
                                     <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
-                                {% endif %}
-
-
-                                {# Subtask Minimisation Button #}
-                                {% if level > 0 %}
                                     <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn">
-                                        <span class="collapse-icon">&#9660;</span> {# <--- This is the down arrow unicode #}
+                                        <span class="collapse-icon">&#9660;</span>
                                     </button>
-                                {% endif %}
-
-                                {% if level > 0 %}
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 {% endif %}
                             </div>
 
-                            {# Conditional rendering for task options based on level #}
+                            {# Task Options and Subtask List #}
                             {% if level > 0 %}
-                                <div class="task-options mb-1">
-                                    <div class="form-floating mb-2">
+                                <div class="task-options mb-1 d-flex flex-wrap align-items-center gap-2">
+
+                                    {# Planned Hours Input - Label to the left of input #}
+                                    <div class="d-flex align-items-center gap-1" style="max-width: 200px;"> {# Adjusted max-width slightly for better fit #}
+                                        <label for="planned_hours_{{ task.id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label> {# Added mb-0, text-nowrap #}
+                                        <input type="number" min="0" step="0.1" class="form-control form-control-sm flex-grow-1"
+                                            id="planned_hours_{{ task.id | replace('.', '_') }}"
+                                            name="planned_hours_{{ task.id | replace('.', '_') }}"
+                                            value="{{ task.individual_planned_hours if task.individual_planned_hours is not none else '' }}"
+                                            placeholder="0.0"> {# Changed placeholder #}
+                                    </div>
+
+                                    {# Due Date Input - Label to the left of input #}
+                                    {% if task.due_date is defined %}
+                                    <div class="d-flex align-items-center gap-1" style="max-width: 200px;"> {# Adjusted max-width slightly for better fit #}
+                                        <label for="due_date_{{ task.id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Due Date:</label> {# Added mb-0, text-nowrap #}
+                                        <input type="date" class="form-control form-control-sm flex-grow-1" id="due_date_{{ task.id | replace('.', '_') }}" name="due_date_{{ task.id | replace('.', '_') }}" value="{{ task.due_date }}" placeholder="YYYY-MM-DD"> {# Changed placeholder #}
+                                    </div>
+                                    {% endif %}
+
+                                    {# Description is a form-floating, so its display is handled by CSS #}
+                                    <div class="form-floating flex-grow-1 w-100">
                                         <textarea class="form-control" placeholder="Description" id="description_{{ task.id | replace('.', '_') }}" name="description_{{ task.id | replace('.', '_') }}" style="height: 100px;">{{ task.description }}</textarea>
                                         <label for="description_{{ task.id | replace('.', '_') }}">Description</label>
                                     </div>
+
                                     <div class="form-check mb-2">
                                         <input type="checkbox" class="form-check-input completed-checkbox" id="completed_{{ task.id | replace('.', '_') }}" name="completed_{{ task.id | replace('.', '_') }}" {% if task.completed %}checked{% endif %}>
                                         <label class="form-check-label" for="completed_{{ task.id | replace('.', '_') }}">Completed</label>
                                     </div>
+
+                                    {# Display calculated planned hours for parent tasks (level > 0 and has subtasks) #}
+                                    {% if task.subtasks %}
+                                        <div class="mb-2 text-end ms-auto">
+                                            <strong class="text-muted">Subtask Sum:</strong>
+                                            <span class="fs-6 fw-bold text-info">
+                                                {{ "%.1f" | format(task.calculated_planned_hours) if task.calculated_planned_hours is not none else "N/A" }} hrs
+                                            </span>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             {% else %}
-                                {# For level 0, display the project description (which comes from the 'project_details' variable) #}
+                                {# Main Project Description #}
                                 <div class="task-options mb-1 mx-auto fs-6 fw-bold i">
-                                   "{{ project_details.description }}" {# Use project_details.description here #}
+                                    "{{ project_details.description }}"
                                 </div>
-                                {# Removed editable fields for level 0 task here to avoid confusion #}
-                            {%endif %}
+                            {% endif %}
 
-
-                            {# recursively step through and generate html for each subtask #}
                             {% if task.subtasks %}
                             <div class="subtask-list">
                                 {% for subtask in task.subtasks %}
@@ -340,6 +385,7 @@
                         </div>
                     </div>
                 {% endmacro %}
+    
 
                 {% for task in tasks %} {# There's only ever going to be one task, given the output of the build_task_tree function is a list of 1 dictionary, which represents the project, and has a "subtasks" key, with the rest of the info. Maybe I should restructure this.#}
                     {{ render_task_item(task, 0) }} {# Initial call for main tasks with level 0 #}
@@ -729,7 +775,7 @@
                         description = card.querySelector('.task-options.mb-1.mx-auto.fs-6.fw-bold.i').textContent.trim().replace(/^"|"$/g, '');
                         dueDate = null; // No due date input for project task here
                         completed = false; // Project task itself is not "completed" in this sense
-                        plannedHours = ; // No planned hours input for project task here
+                        plannedHours = null ; // No planned hours input for project task here
                     } else {
                         // For subtasks (level > 0), get from the visible text inputs
                         taskName = card.querySelector('input[type="text"]').value;
