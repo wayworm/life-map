@@ -133,11 +133,11 @@
 }
 
 .subtask-level-1 {background-color: #f9f9f9;border: 1px solid #cccccc;margin-left: 5px;   width: calc(100% - 5px);border-left: 3px solid #4a90e2; /* Blue */}
-.subtask-level-2 {background-color: #f6f6f6;border: 1px solid #bbbbbb;margin-left: 10px;    width: calc(100% - 10px);border-left: 3px solid #50e3c2; /* Aqua */}
+.subtask-level-2 {background-color: #f6f6f6;border: 1px solid #bbbbbb;margin-left: 10px;      width: calc(100% - 10px);border-left: 3px solid #50e3c2; /* Aqua */}
 .subtask-level-3 {background-color: #f2f2f2;border: 1px solid #aaaaaa;margin-left: 15px;  width: calc(100% - 15px);border-left: 3px solid #f5a623; /* Orange */}
-.subtask-level-4 {background-color: #eeeeee;border: 1px solid #999999;margin-left: 20px;    width: calc(100% - 20px);  border-left: 3px solid #d96c4f; /* Warm Coral */}
-.subtask-level-5 {background-color: #ebebeb;border: 1px solid #888888;margin-left: 25px;    width: calc(100% - 25px);border-left: 3px solid #9013fe; /* Violet */}
-.subtask-level-6 {background-color: #e7e7e7;border: 1px solid #777777;margin-left: 30px;    width: calc(100% - 30px);border-left: 3px solid #417505; /* Deep Green */}
+.subtask-level-4 {background-color: #eeeeee;border: 1px solid #999999;margin-left: 20px;      width: calc(100% - 20px);   border-left: 3px solid #d96c4f; /* Warm Coral */}
+.subtask-level-5 {background-color: #ebebeb;border: 1px solid #888888;margin-left: 25px;      width: calc(100% - 25px);border-left: 3px solid #9013fe; /* Violet */}
+.subtask-level-6 {background-color: #e7e7e7;border: 1px solid #777777;margin-left: 30px;      width: calc(100% - 30px);border-left: 3px solid #417505; /* Deep Green */}
 
     /* Styles for completed tasks */
     .completed-task {
@@ -394,7 +394,31 @@
         }
 
         async function handleFormSubmit(event) {
-            event.preventDefault();
+            event.preventDefault(); // Always prevent the default submission first
+
+            let isDataValid = true;
+            // Find all date inputs in the form to validate them
+            document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[type="date"]').forEach(dateInput => {
+                const subtaskCard = dateInput.closest('.card');
+                const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
+                const parentDueDateInput = parentCard?.querySelector('input[type="date"]');
+
+                // Check for the invalid condition: parent has a due date AND the subtask's due date is later.
+                if (parentDueDateInput && parentDueDateInput.value && dateInput.value) {
+                    if (dateInput.value > parentDueDateInput.value) {
+                        const taskName = subtaskCard.querySelector('input[id^="name_"]').value || "Untitled Task";
+                        showAlert(`Validation Error: Task "${taskName}" cannot be due after its parent.`);
+                        isDataValid = false; // Mark data as invalid
+                    }
+                }
+            });
+
+            // If the validation loop found any errors, STOP the submission.
+            if (!isDataValid) {
+                return;
+            }
+
+            // --- Original save logic will only run if the data is valid ---
             const projectId = document.getElementById('project_id').value;
             const tasksData = collectTaskData(document.querySelector('.task-list'));
             const payload = {
@@ -433,6 +457,11 @@
             container.addEventListener('change', function(event) {
                 const checkbox = event.target.closest('.completed-checkbox');
                 if (checkbox) handleCompletionChange(checkbox);
+
+                // Correctly target the due date input
+                if (event.target.matches('input[type="date"]')) {
+                    validateDueDate(event.target);
+                }
             });
 
             container.addEventListener('input', function(event) {
@@ -643,6 +672,39 @@
                 }
             }
         }
+
+/**
+         * Validates that a subtask's due date is not earlier than its parent's.
+         * This version uses direct string comparison to avoid timezone issues.
+         * @param {HTMLInputElement} dateInput The date input element that was changed.
+         */
+        function validateDueDate(dateInput) {
+            const subtaskCard = dateInput.closest('.card');
+            if (!subtaskCard) return;
+
+            // Find the parent card by navigating up the DOM tree
+            const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
+            if (!parentCard) {
+                // This subtask has no parent in the current structure, so no validation needed
+                return;
+            }
+
+            // Find the parent's due date input
+            const parentDueDateInput = parentCard.querySelector('input[type="date"]');
+            if (!parentDueDateInput || !parentDueDateInput.value) {
+                // Parent has no due date set, so we can't validate against it
+                return;
+            }
+            
+            const parentDueDateStr = parentDueDateInput.value;
+            const subtaskDueDateStr = dateInput.value;
+
+            // Only compare if the subtask has a date
+            if (subtaskDueDateStr && subtaskDueDateStr > parentDueDateStr) {
+                showAlert("A subtask's due date cannot be later than its parent's due date.");
+                dateInput.value = ''; // Reset the invalid date
+            }
+        }
     });
-    </script>
+</script>
 {% endblock %}
