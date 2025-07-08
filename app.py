@@ -4,11 +4,12 @@ from flask import Flask, flash, redirect, render_template, request, session, g, 
 from flask_session import Session
 from functools import wraps
 import traceback
-import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
-
+from google_calendar import *
+from db import get_db
 
 # TODO: Link to Google Calendar.
+# TODO: fix depreciated line: "now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time "
 
 # DONE:
 # TODO: Project pages due date --> years, months, weeks, days dependings on timescale 
@@ -36,11 +37,6 @@ def error_page(message, code=400):
     """Render error page to user."""
     return render_template("error_page.html", code=code, message=message), code
 
-def get_db():
-    if 'lifemap_db' not in g:
-        g.lifemap_db = sqlite3.connect("LifeMap.db")
-        g.lifemap_db.row_factory = sqlite3.Row
-    return g.lifemap_db
 
 def login_required(f):
     @wraps(f)
@@ -192,6 +188,7 @@ def reset_password():
             return error_page("Error resetting password", 500)
     else:
         return error_page("Incorrect current password.", 403)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -398,6 +395,12 @@ def delete_project(project_id):
         flash(f"An error occurred while deleting the project: {e}", "danger")
     return redirect("/projects")
 
+# Add this import at the top of your Flask app file
+from google_calendar import pushOutgoingEvents
+import traceback
+
+# Your existing Flask app setup...
+
 @app.route("/save-tasks", methods=["POST"])
 @login_required
 def save_tasks():
@@ -424,16 +427,16 @@ def save_tasks():
         id_map = {}
         def process_task_list(task_list, parent_db_id=None):
             for task in task_list:
+                # ... (your existing code for getting task properties: name, description, etc.)
                 client_id = task["item_id"]
                 name = task["name"]
                 description = task.get("description")
-                due_date = task.get("due_date") or None
+                due_date = task.get("due_date") or None # e.g., "2025-09-15"
                 is_completed = 1 if task.get("is_completed", False) else 0
-                # ✨ ADDITION: Get the is_minimized state from the payload
                 is_minimized = 1 if task.get("is_minimized", False) else 0
                 display_order = task.get("display_order", 0)
-                
                 planned_hours_input = task.get("planned_hours")
+                # ... (your existing code for planned hours)
                 planned_hours_to_save = None
                 if not task.get("subtasks") and planned_hours_input not in ['', None]:
                     try:
@@ -442,8 +445,8 @@ def save_tasks():
                         planned_hours_to_save = None
 
                 current_db_id = None
+                # ... (your existing INSERT/UPDATE logic)
                 if isinstance(client_id, str) and client_id.startswith("new-"):
-                    # ✨ MODIFICATION: Add is_minimized to the INSERT statement
                     cursor.execute("""
                         INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, display_order, planned_hours, is_minimized)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -454,16 +457,28 @@ def save_tasks():
                 
                 elif str(client_id).isdigit():
                     current_db_id = int(client_id)
-                    # ✨ MODIFICATION: Add is_minimized to the UPDATE statement
                     cursor.execute("""
                         UPDATE work_items
                         SET name = ?, description = ?, due_date = ?, is_completed = ?,
                             display_order = ?, parent_item_id = ?, planned_hours = ?, is_minimized = ?
                         WHERE item_id = ? AND project_id = ?
                     """, (name, description, due_date, is_completed, display_order, parent_db_id, planned_hours_to_save, is_minimized, current_db_id, project_id))
-                
                 else:
                     continue
+
+                # ✨ PUSH TO GOOGLE CALENDAR (Local/Single-User Version) ✨
+                # If the task has a due date, create a calendar event.
+                if due_date:
+                    print(f"Task '{name}' has a due date. Preparing to create calendar event.")
+                    # Format the data for a full-day Google Calendar event.
+                    event_data = {
+                      'summary': name,
+                      'description': description or "No description provided.",
+                      'start': { 'date': due_date }, # Format: 'YYYY-MM-DD'
+                      'end': { 'date': due_date },
+                    }
+                    # Call the function from google_calendar.py
+                    pushOutgoingEvents(event_data)
 
                 if current_db_id and task.get("subtasks"):
                     process_task_list(task["subtasks"], current_db_id)

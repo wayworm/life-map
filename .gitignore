@@ -3,6 +3,11 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+
+credentials.json
+token.json
+tasks.json
+
 # C extensions
 *.so
 
