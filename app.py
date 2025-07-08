@@ -54,7 +54,6 @@ def after_request(response):
 
 # --- All other routes remain the same ---
 
-
 @app.route("/")
 @login_required
 def index():

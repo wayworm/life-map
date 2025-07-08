@@ -1,190 +1,106 @@
-### LifeMap
+# LifeMap
+LifeMap is an intuitive web application designed to help you conquer your goals by breaking down large projects into manageable, hierarchical tasks. Organize everything from a simple to-do list to a complex, multi-layered project with an easy-to-use drag-and-drop interface.
 
-LifeMap is a Flask-based web application for managing personal projects and hierarchical tasks. Users can register, log in, create new projects, and organize tasks and subtasks within those projects.
+![LifeMap Projects Page](https://imgur.com/a/QiaV9wq) <!-- It's recommended to replace this with a real screenshot or GIF of your application in action! -->
 
-#### Features
-- ##### User Authentication:
+---
 
-        User registration with password hashing.
+## Core Features
 
-        User login and session management.
+* **Project Dashboard:** View all your projects at a glance. See their descriptions and quickly assess upcoming deadlines with a human-readable "due in" timeline (e.g., "Due this week", "Due in 3 months").
 
-        Password change functionality.
+* **Hierarchical Task Management:** This is the heart of LifeMap.
+    * **Nesting:** Create tasks and break them down into as subtasks nested up to 6 layers deep.
+    * **Drag & Drop:** Intuitively reorder tasks and change their hierarchy simply by dragging them.
+    * **Smart Completion:** Marking a parent task as "complete" automatically completes all its children. Unchecking a subtask intelligently un-marks its parents, ensuring your project status is always accurate.
+    * **Automatic Hour Calculation:** Parent tasks automatically sum the "planned hours" of their subtasks, giving you an instant overview of the total effort required.
 
-- ##### Project Management:
+* **Calendar View:** All your tasks with due dates are automatically populated into a clean, full-featured calendar, allowing you to visualize your schedule and deadlines across all projects.
 
-        Create new projects with title, description, start date, and due date.
+* **Full User Control:**
+    * **Secure Authentication:** Standard user registration and login system with password hashing to keep your account secure.
+    * **Account Management:** Easily change your username or reset your password from a simple account page.
 
-        View a list of all owned projects.
+---
 
-        Edit project titles. 
+## Tech Stack
 
-- ##### Task Management:
+* **Backend:** Python (Flask), Flask-Session, Werkzeug
+* **Frontend:** HTML5, CSS3, JavaScript (ES6+), Jinja
+* **Styling & UI:** Bootstrap 5, Font Awesome
+* **Database:** SQLite
+* **JS Libraries:** SortableJS (for drag-and-drop), FullCalendar (for calendar view)
 
-        Hierarchical task structure (tasks and subtasks).
-
-        Add, edit, and delete tasks and subtasks.
-
-        Mark tasks as complete/incomplete.
-
-        Tasks inherit completion status downwards; uncompleting a child uncompletes parents.
-
-        Input fields for task name, description, due date, and planned hours.
-
-        Dynamic addition and deletion of tasks/subtasks without page refresh.
-
-        Client-side temporary IDs for new tasks, mapped to database IDs on save.
-
-        Visual indication of task hierarchy using indentation and color coding.
-
-        Collapse/expand subtask lists.
-
-- ##### Database:
-
-        SQLite database (LifeMap.db) for storing user, project, and task data.
-
-- ##### Responsive Design:
-
-        Utilizes Bootstrap 5 and Font Awesome for styling and icons.
-
-        Includes custom CSS for enhanced aesthetics.
-
-## Technologies Used
-
-Backend: Flask (Python)
-
-Database: SQLite3
-
-- ##### Frontend:
-
-        HTML5
-
-        CSS3 (Custom styles, Bootstrap 5)
-
-        JavaScript (ES6+)
-
-        Jinja2 (Templating engine)
-
-- ##### Libraries/Frameworks:
-
-        Flask-Session
-
-        Werkzeug for password hashing
-
-        Bootstrap 5 (via CDN)
-
-        Font Awesome (via CDN)
+---
 
 ## Setup and Installation
-Prerequisites
 
-Python 3.x
-pip (Python package installer)
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/your-username/LifeMap.git](https://github.com/wayworm/LifeMap.git)
+    cd LifeMap
+    ```
 
-Steps
+2.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-Clone the repository:
+3.  **Initialize the Database**
+    The project comes with a `LifeMap.db` file. The schema is detailed below. You can run the included `resetDatabase.py` to reset it if needed.
 
-git clone <repository_url>
-cd LifeMap
+    <details>
+    <summary>Click to view Database Schema</summary>
 
-Install Python dependencies located in the requirements.txt
+    **Users Table**
+    ```sql
+    CREATE TABLE IF NOT EXISTS users (
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        email TEXT UNIQUE,
+        password_hash TEXT NOT NULL
+    );
+    ```
 
-Initialize the Database using provided resetDatabase.py:
+    **Projects Table**
+    ```sql
+    CREATE TABLE IF NOT EXISTS projects (
+        project_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        start_date TEXT,
+        end_date TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (user_id)
+    );
+    ```
 
-The project contains the database file, here is the schema used within:
+    **Work Items Table (Tasks & Subtasks)**
+    ```sql
+    CREATE TABLE IF NOT EXISTS work_items (
+        item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        parent_item_id INTEGER,
+        name TEXT NOT NULL,
+        description TEXT,
+        due_date TEXT,
+        is_completed INTEGER DEFAULT 0,
+        planned_hours REAL,
+        display_order INTEGER,
+        is_minimized INTEGER DEFAULT 0,
+        google_calendar_event_id TEXT,
+        FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_item_id) REFERENCES work_items (item_id) ON DELETE CASCADE
+    );
+    ```
+    </details>
 
--- users table
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    email TEXT UNIQUE,
-    password_hash TEXT NOT NULL
-);
-<br><br><br><br>
--- projects table<br>
-CREATE TABLE IF NOT EXISTS projects (<br>
-    project_id INTEGER PRIMARY KEY AUTOINCREMENT,<br>
-    user_id INTEGER NOT NULL,<br>
-    name TEXT NOT NULL,<br>
-    description TEXT,<br>
-    start_date TEXT,<br>
-    end_date TEXT,<br>
-    FOREIGN KEY (user_id) REFERENCES users (user_id)<br>
-);<br>
-<br>
-<br>
-<br>
--- work_items table (tasks and subtasks)<br>
-CREATE TABLE IF NOT EXISTS work_items (<br>
-    item_id INTEGER PRIMARY KEY AUTOINCREMENT,<br>
-    project_id INTEGER NOT NULL,<br>
-    parent_item_id INTEGER, -- NULL for top-level tasks<br>
-    name TEXT NOT NULL,<br>
-    description TEXT,<br>
-    due_date TEXT,<br>
-    is_completed INTEGER DEFAULT 0, -- 0 for false, 1 for true<br>
-    priority INTEGER,<br>
-    status TEXT,<br>
-    assigned_to_user_id INTEGER,<br>
-    display_order INTEGER, -- For manual sorting<br>
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,<br>
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,<br>
-    FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE,<br>
-    FOREIGN KEY (parent_item_id) REFERENCES work_items (item_id) ON DELETE CASCADE,<br>
-    FOREIGN KEY (assigned_to_user_id) REFERENCES users (user_id)<br>
-);<br>
+4.  **Run the Application**
+    ```bash
+    python app.py
+    ```
+
+5.  **Access LifeMap**
+    Open your browser and navigate to `http://127.0.0.1:5000/`.
 
 
-Run the application:
-
-python app.py
-
-Access the application:
-Open your web browser and navigate to http://127.0.0.1:5000/.
-
-Project Structure
-
-.
-├── app.py                      
-├── LifeMap.db                  >
-├── static/                     
-│   └── ...<br>
-└── templates/                  
-├── account.html              
-├── error_page.html      
-├── editProject.html            
-├── layout.html                 
-├── login.html        
-├── newProject.html           
-├── projects.html             
-├── register.html            
-└── tasks v4.html              
-
-Usage
-
-Register: Create a new user account.
-
-Log In: Access your dashboard.
-
-New Project: Create a project from the "New Project" link.
-
-My Projects: View your projects. Click "Tasks" to manage tasks within a project.
-
-Task Management:
-
-    The project name acts as the top-level task.
-
-    Add subtasks using "Add Subtask" buttons.
-
-    Edit task names, descriptions, and due dates directly.
-
-    Mark tasks as "Completed" using checkboxes.
-
-    Delete tasks using the "Delete" button (subtasks will also be removed from display).
-
-    "Save All Tasks" button persists changes to the database.
-
-Potential Improvements and Known Issues
-
-Database Schema Management: No formal database migration system (e.g., Flask-Migrate) is in place. Schema changes require manual CREATE TABLE or ALTER TABLE statements.
