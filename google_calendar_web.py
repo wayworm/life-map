@@ -4,7 +4,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from db import get_db 
+from help import get_db 
 
 # For if / when this becomes a web app for other people!
 

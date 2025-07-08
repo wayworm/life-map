@@ -54,11 +54,11 @@ def delete_google_event(event_id):
         
         # Call the Calendar API to delete the event
         service.events().delete(calendarId='primary', eventId=event_id).execute()
-        print(f"Event with ID: {event_id} deleted successfully.")
+        print(f"Event with ID: {event_id} deleted successfully.\n")
 
     except HttpError as error:
         # If the event is already gone, that's okay. Ignore the error.
         if error.resp.status in [404, 410]:
-            print(f"Event with ID: {event_id} was already deleted or not found.")
+            print(f"Event with ID: {event_id} was already deleted or not found.\n")
         else:
             print(f"An error occurred while deleting event {event_id}: {error}")
