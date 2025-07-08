@@ -1,0 +1,49 @@
+
+    body {
+        font-family: 'Inter', sans-serif; /* Set default font to Inter */
+        background-color: #f8f9fa; /* Light gray background, typical Bootstrap */
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* Ensure full viewport height */
+    }
+    .text-gradient {
+        /* Using Bootstrap's text utilities to mimic a gradient for now,
+            or you can add a custom CSS gradient if desired.
+            For pure Bootstrap, this will just be a color. */
+        color: #4f46e5; /* A shade of indigo, for consistency */
+        font-weight: bold; /* Make it bold */
+    }
+    .flash-message {
+        animation: fadeInOut 5s forwards;
+    }
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-20px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-20px); display: none;}
+    }
+    /* Custom hover styles for nav-links not directly in Bootstrap */
+    .navbar-nav .nav-link {
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+    .navbar-nav .nav-link:hover {
+        background-color: #e9ecef; /* Light gray for hover background */
+        color: #4f46e5 !important; /* Indigo for hover text color */
+        border-radius: 0.25rem; /* Rounded corners on hover */
+    }
+    .navbar-nav .nav-link.text-danger:hover { /* Specific hover for logout */
+        background-color: #dc3545; /* Red background for hover */
+        color: white !important;
+    }
+    .navbar-nav .nav-link.text-primary:hover { /* Specific hover for login */
+        background-color: #0d6efd; /* Blue background for hover */
+        color: white !important;
+    }
+
+    #bg{
+        background-color: #cfcfcf
+    }
+
+    #bgg{
+        background-color:rgb(221, 221, 215)
+    }   
