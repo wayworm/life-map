@@ -24,11 +24,13 @@ def build_task_tree(tasks_flat_list):
     task_map = {}
     for task_row in tasks_flat_list:
         task_dict = dict(task_row)
+
         # Match keys to schema for consistency
         task_dict['item_id'] = task_dict['item_id']
         task_dict['parent_item_id'] = task_dict['parent_item_id']
         task_dict['is_completed'] = bool(task_dict['is_completed'])
-        # ✨ ADDITION: Handle the new is_minimized state
+
+        # Handle the is_minimized state
         task_dict['is_minimized'] = bool(task_dict['is_minimized'])
         task_dict['subtasks'] = []
         task_dict['planned_hours'] = task_dict['planned_hours']
@@ -84,7 +86,8 @@ def format_date_difference(target_date_str: str) -> str:
 
 def process_task_list(task_list, parent_db_id=None):
             for task in task_list:
-                # Get all task properties from the request payload
+
+                # Get all task properties
                 client_id = task["item_id"]
                 name = task["name"]
                 description = task.get("description")
@@ -96,7 +99,8 @@ def process_task_list(task_list, parent_db_id=None):
                 current_db_id = None
 
                 if isinstance(client_id, str) and client_id.startswith("new-"):
-                    # This is a NEW task, so we INSERT it into the database.
+
+                    # new tasks are inserted.
                     cursor.execute("""
                         INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, is_minimized, display_order)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -106,7 +110,8 @@ def process_task_list(task_list, parent_db_id=None):
                     id_map[client_id] = current_db_id
 
                 elif str(client_id).isdigit():
-                    # This is an EXISTING task, so we UPDATE it.
+
+                    # existing tasks are updated.
                     current_db_id = int(client_id)
                     cursor.execute("""
                         UPDATE work_items
@@ -114,7 +119,6 @@ def process_task_list(task_list, parent_db_id=None):
                         WHERE item_id = ? AND project_id = ?
                     """, (name, description, due_date, is_completed, is_minimized, display_order, parent_db_id, current_db_id, project_id))
 
-                # --- The following logic runs for EVERY task after its INSERT or UPDATE ---
 
                 # If the task has a due date, sync it with Google Calendar.
                 if due_date:

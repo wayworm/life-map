@@ -1,0 +1,47 @@
+
+    body {
+        font-family: 'Inter', sans-serif; 
+        background-color: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* Ensure full viewport height */
+    }
+    .text-gradient {
+        color: #4f46e5; 
+        font-weight: bold; 
+    }
+    .flash-message {
+        animation: fadeInOut 5s forwards;
+    }
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-20px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-20px); display: none;}
+    }
+
+    /* Custom hover styles for nav-links not directly in Bootstrap */
+    .navbar-nav .nav-link {
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+    .navbar-nav .nav-link:hover {
+        background-color: #e9ecef; 
+        color: #4f46e5 !important;
+        border-radius: 0.25rem; 
+    }
+    .navbar-nav .nav-link.text-danger:hover { 
+        background-color: #dc3545;
+        color: white !important;
+    }
+    .navbar-nav .nav-link.text-primary:hover {
+        background-color: #0d6efd; 
+        color: white !important;
+    }
+
+    #bg{
+        background-color: #cfcfcf
+    }
+
+    #bgg{
+        background-color:rgb(221, 221, 215)
+    }   

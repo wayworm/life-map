@@ -13,9 +13,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
 
-    {% block style %}{% endblock %} <!-- For page-specific styles -->
+    {% block style %}{% endblock %} <!-- page-specific styles -->
 
 </head>
 <body id="bg" class="d-flex flex-column min-vh-100">
@@ -72,7 +72,6 @@
     </main>
 
     <footer id="bg" class="mt-auto py-4 text-center text-muted small">
-        <!-- Optional: Add footer content here -->
         &copy; 2025 LifeMap. All rights reserved.
 
         

@@ -26,7 +26,7 @@ def delete_all_records(db_path="LifeMap.db"):
             cursor.execute(f"DELETE FROM {table_name};")
             print(f"    Deleted {cursor.rowcount} rows.")
 
-        conn.commit() # Commit the changes to make them permanent
+        conn.commit() 
         print("All records deleted successfully from all tables.")
 
     except sqlite3.Error as e:

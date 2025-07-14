@@ -10,20 +10,6 @@ from help import *
 # TODO: fix the "Description" text going over the input.
 # TODO: Fix the broken task saving function... 2 steps back...
 
-# DONE:
-# TODO: Project pages due date --> years, months, weeks, days dependings on timescale
-# TODO: Add functionality to reorder the tasks by drag and drop.
-# TODO: Add a maximum value of 6 layers of subtasks. Present a message to screen if they try to go deeper.
-# TODO: make the drag and drop easier to work with - it's hard to turn something into a subtask
-#       if the target parent doesn't already have a subtask
-# TODO: Add a way to track whether something was minimsed, so it doesn't default to open.
-# TODO: if a task is completed, it's minimisation behaviour should change, so the whole card hides, and we have a button to reshow hidden cards
-# TODO: Subtasks can no longer be due after their parent tasks,
-# TODO: Make nav bar stick to top of page when scrolling down.
-# TODO: Logic to disallow a subtask to have more hours attributed to it
-# than it's parent task.
-
-
 # Configure application
 app = Flask(__name__)
 
@@ -51,8 +37,6 @@ def after_request(response):
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
-
-# --- All other routes remain the same ---
 
 @app.route("/")
 @login_required
@@ -418,20 +402,17 @@ def save_tasks():
             return jsonify(
                 {"error": "Project not found or not owned by user."}), 403
 
-        # 1. Handle any tasks marked for deletion
+        # Handle any tasks marked for deletion
         if deleted_item_ids:
             clean_ids = [int(i) for i in deleted_item_ids if str(i).isdigit()]
             if clean_ids:
                 placeholders = ','.join(['?'] * len(clean_ids))
 
-                # First, get the Google Calendar event IDs before deleting from
-                # the database
                 cursor.execute(
                     f"SELECT item_id, google_calendar_event_id FROM work_items WHERE item_id IN ({placeholders})",
                     clean_ids)
                 items_to_delete = cursor.fetchall()
 
-                # Delete each event from Google Calendar
                 for item in items_to_delete:
                     if item['google_calendar_event_id']:
                         delete_google_event(item['google_calendar_event_id'])
@@ -441,23 +422,21 @@ def save_tasks():
                     f"DELETE FROM work_items WHERE item_id IN ({placeholders}) AND project_id = ?",
                     clean_ids + [project_id])
 
-        # 2. Define the recursive function to process all incoming tasks
+        # Define the recursive function to process all incoming tasks
         id_map = {}
 
-        # 3. Start the process with the top-level tasks from the request
+        # Start the process with the top-level tasks from the request
         process_task_list(tasks_data)
 
-        # 4. Finalize the transaction and return a success response
         conn.commit()
         return jsonify({"message": "Tasks saved successfully!",
                        "new_ids_map": id_map}), 200
 
     except Exception as e:
-        # If any error occurs, roll back all database changes and return an
-        # error response
+
         conn.rollback()
-        print(f"Error saving tasks: {e}")
         traceback.print_exc()
+        
         return jsonify(
             {"error": "Internal server error", "details": str(e)}), 500
 

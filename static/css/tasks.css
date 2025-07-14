@@ -121,17 +121,16 @@ h1 {
 .subtask-level-0 {
 background-color: #ffffff;
 border: 1px solid #d0d0d0;
-border-left: 3px solid #5a5a5a; /* Neutral Grey */
+border-left: 3px solid #5a5a5a; 
 }
 
-.subtask-level-1 {background-color: #f9f9f9;border: 1px solid #cccccc;margin-left: 5px;   width: calc(100% - 5px);border-left: 3px solid #4a90e2; /* Blue */}
-.subtask-level-2 {background-color: #f6f6f6;border: 1px solid #bbbbbb;margin-left: 10px;      width: calc(100% - 10px);border-left: 3px solid #50e3c2; /* Aqua */}
-.subtask-level-3 {background-color: #f2f2f2;border: 1px solid #aaaaaa;margin-left: 15px;  width: calc(100% - 15px);border-left: 3px solid #f5a623; /* Orange */}
-.subtask-level-4 {background-color: #eeeeee;border: 1px solid #999999;margin-left: 20px;      width: calc(100% - 20px);   border-left: 3px solid #d96c4f; /* Warm Coral */}
-.subtask-level-5 {background-color: #ebebeb;border: 1px solid #888888;margin-left: 25px;      width: calc(100% - 25px);border-left: 3px solid #9013fe; /* Violet */}
-.subtask-level-6 {background-color: #e7e7e7;border: 1px solid #777777;margin-left: 30px;      width: calc(100% - 30px);border-left: 3px solid #417505; /* Deep Green */}
+.subtask-level-1 {background-color: #f9f9f9;border: 1px solid #cccccc;margin-left: 5px;   width: calc(100% - 5px);border-left: 3px solid #4a90e2;}
+.subtask-level-2 {background-color: #f6f6f6;border: 1px solid #bbbbbb;margin-left: 10px;      width: calc(100% - 10px);border-left: 3px solid #50e3c2;}
+.subtask-level-3 {background-color: #f2f2f2;border: 1px solid #aaaaaa;margin-left: 15px;  width: calc(100% - 15px);border-left: 3px solid #f5a623;}
+.subtask-level-4 {background-color: #eeeeee;border: 1px solid #999999;margin-left: 20px;      width: calc(100% - 20px);   border-left: 3px solid #d96c4f;}
+.subtask-level-5 {background-color: #ebebeb;border: 1px solid #888888;margin-left: 25px;      width: calc(100% - 25px);border-left: 3px solid #9013fe;}
+.subtask-level-6 {background-color: #e7e7e7;border: 1px solid #777777;margin-left: 30px;      width: calc(100% - 30px);border-left: 3px solid #417505;}
 
-/* Styles for completed tasks */
 .completed-task {
     border-color: #c3e6cb !important;
     position: relative;
@@ -155,7 +154,6 @@ border-left: 3px solid #5a5a5a; /* Neutral Grey */
     color: #6c757d;
 }
 
-/* Alert message styling */
 .alert-message {
     position: fixed;
     top: 20px;

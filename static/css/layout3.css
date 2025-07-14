@@ -1,0 +1,158 @@
+:root {
+    --sidebar-width: 280px;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e);
+    background-size: 400% 400%;
+    animation: gradientBG 25s ease infinite;
+    color: #fff;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* --- Sidebar / Navigation --- */
+.sidebar {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.sidebar-brand {
+    font-weight: 700;
+    font-size: 2.2rem;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 2rem;
+    animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #007bff; }
+    to { text-shadow: 0 0 10px #fff, 0 0 20px #ff4da6, 0 0 30px #ff4da6; }
+}
+
+.sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff !important;
+    transform: translateX(5px);
+}
+
+.sidebar .nav-link i {
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    width: 25px;
+    text-align: center;
+}
+
+.user-info {
+    margin-top: auto; /* Pushes this block to the bottom */
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- Main Content Area --- */
+.main-content {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    padding: 2rem;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.content-wrapper {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 2rem;
+    min-height: calc(100% - 6rem); /* Adjust based on footer height */
+}
+
+/* --- Flash Messages --- */
+.flash-message {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    animation: fadeInDown 0.5s ease-out, fadeOut 0.5s ease-in 4s forwards;
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-30px); }
+}
+
+/* --- Footer --- */
+.footer {
+    text-align: center;
+    padding-top: 2rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 991.98px) {
+    body {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: sticky;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        z-index: 1030;
+    }
+    .sidebar-brand {
+        margin-bottom: 0;
+        font-size: 1.8rem;
+    }
+    .sidebar .nav-pills, .user-info {
+        display: none; /* Hide main nav and user info for a mobile toggler */
+    }
+    .mobile-toggler {
+        display: block !important;
+        color: #fff;
+        font-size: 1.5rem;
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        height: auto;
+        padding: 1rem;
+    }
+    .content-wrapper { padding: 1rem; }
+    /* This is a placeholder for a mobile menu. A real implementation would use JS to toggle a dropdown/offcanvas */
+}

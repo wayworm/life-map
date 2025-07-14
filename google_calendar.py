@@ -1,6 +1,3 @@
-# google_calendar.py
-
-# ... (keep all your existing code and imports)
 import datetime
 import os.path
 import json
@@ -13,7 +10,6 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def _get_credentials():
-    # ... (this helper function remains unchanged)
     creds = None
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
@@ -28,7 +24,6 @@ def _get_credentials():
     return creds
 
 def pushOutgoingEvents(event_data):
-    # ... (this function remains unchanged)
     try:
         creds = _get_credentials()
         service = build("calendar", "v3", credentials=creds)
@@ -42,7 +37,6 @@ def pushOutgoingEvents(event_data):
         print(f"A general error occurred: {e}")
         return None
 
-# ✨ NEW FUNCTION ✨
 def delete_google_event(event_id):
     """Deletes a specific event from the primary Google Calendar."""
     if not event_id:
@@ -52,12 +46,11 @@ def delete_google_event(event_id):
         creds = _get_credentials()
         service = build("calendar", "v3", credentials=creds)
         
-        # Call the Calendar API to delete the event
         service.events().delete(calendarId='primary', eventId=event_id).execute()
         print(f"Event with ID: {event_id} deleted successfully.\n")
 
     except HttpError as error:
-        # If the event is already gone, that's okay. Ignore the error.
+        # If the event is already gone, ignore the error.
         if error.resp.status in [404, 410]:
             print(f"Event with ID: {event_id} was already deleted or not found.\n")
         else:

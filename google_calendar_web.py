@@ -6,7 +6,7 @@ from googleapiclient.errors import HttpError
 
 from help import get_db 
 
-# For if / when this becomes a web app for other people!
+# For if / when this becomes a web app for other people, it just works on my comuputer for now!
 
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
@@ -37,11 +37,12 @@ def get_credentials_for_user(user_id):
     return creds
 
 def pushOutgoingEvents(user_id, event_data):
+
     """Adds a single event to the Google Calendar for the specified user."""
+
     creds = get_credentials_for_user(user_id)
     if not creds or not creds.valid:
         print(f"Could not get valid credentials for user {user_id}")
-        # Optionally, you could return an error or message here
         return None
 
     try:
