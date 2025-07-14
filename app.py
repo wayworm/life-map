@@ -9,6 +9,19 @@ from help import *
 # TODO: fix depreciated line: "now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time "
 # TODO: fix the "Description" text going over the input.
 # TODO: Fix the broken task saving function... 2 steps back...
+# TODO: Add think black outline to navbar text items, so they are distinguished from background.
+# TODO: Let text area for a task grow and push everything below it downward.
+# TODO: Add a line connecting the parent task to all its children. e.g. :
+# TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
+# TODO: BUGFIX: WHen adding new tasks to a project, the top level task does not get assigned the correct parent ID.
+# parent 
+#      |
+#      L Child 1
+#      |     |
+#      |     L Child 1's child
+#      |
+#      L Child 2
+
 
 # Configure application
 app = Flask(__name__)
@@ -329,23 +342,27 @@ def edit_project(project_id):
 @app.route("/details/<int:project_id>")
 @login_required
 def tasks(project_id):
+
     user_id = session["user_id"]
     conn = get_db()
     cursor = conn.cursor()
-
     cursor.execute(
         """SELECT name, description FROM projects WHERE user_id = ? AND project_id = ?""",
         (user_id,
          project_id))
+    
     project_details = cursor.fetchone()
 
     if project_details is None:
         return error_page("Project not found or you are not authorized.", 404)
 
     project_name = project_details["name"]
+
     cursor.execute(
         """SELECT * FROM work_items WHERE project_id = ?""", (project_id,))
+    
     tasks_flat_list = cursor.fetchall()
+
     tree = build_task_tree(tasks_flat_list)
 
     return render_template(
@@ -426,7 +443,7 @@ def save_tasks():
         id_map = {}
 
         # Start the process with the top-level tasks from the request
-        process_task_list(tasks_data)
+        process_task_list(tasks_data, cursor, id_map, project_id)
 
         conn.commit()
         return jsonify({"message": "Tasks saved successfully!",

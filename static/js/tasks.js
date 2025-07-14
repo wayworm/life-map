@@ -37,52 +37,47 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function collectTaskData(container) {
-        const items = [];
-        container.querySelectorAll(':scope > .card').forEach((card, index) => {
+    const items = [];
+    container.querySelectorAll(':scope > .card').forEach((card, index) => {
+        // The level check is now implicitly handled by where we start the call.
+        // But keeping it adds robustness in case the root card is ever passed in.
+        const level = parseInt(card.dataset.level, 10);
+        if (level > 0) {
             const itemId = card.dataset.itemId;
-            const parentItemId = card.dataset.parentItemId || null;
-            const level = parseInt(card.dataset.level, 10);
+            // This is the critical line that needs the correct context
+            const parentItemId = card.dataset.parentItemId || null; 
 
-            if (level > 0) {
-                const name = card.querySelector(`input[id^="name_"]`).value;
-                const description = card.querySelector(`textarea[id^="description_"]`).value;
-                const dueDate = card.querySelector(`input[id^="due_date_"]`).value;
-                const isCompleted = card.querySelector(`input[id^="is_completed_"]`).checked;
-                const plannedHours = card.querySelector(`input[id^="planned_hours_"]`).value;
-                const isMinimized = card.querySelector('.task-options').classList.contains('task-options-minimized');
-                
-                let subtasks = [];
-                const subtaskListContainer = card.querySelector('.subtask-list');
-                if (subtaskListContainer) {
-                    subtasks = collectTaskData(subtaskListContainer);
-                }
+            const name = card.querySelector(`input[id^="name_"]`).value;
+            const description = card.querySelector(`textarea[id^="description_"]`).value;
+            const dueDate = card.querySelector(`input[id^="due_date_"]`).value;
+            const isCompleted = card.querySelector(`input[id^="is_completed_"]`).checked;
+            const plannedHours = card.querySelector(`input[id^="planned_hours_"]`).value;
+            const isMinimized = card.querySelector('.task-options').classList.contains('task-options-minimized');
+            
+            let subtasks = [];
+            const subtaskListContainer = card.querySelector('.subtask-list');
+            if (subtaskListContainer) {
+                // The recursive call remains the same
+                subtasks = collectTaskData(subtaskListContainer);
+            }
 
-                const itemObject = {
-                    item_id: itemId,
-                    parent_item_id: parentItemId,
-                    name: name,
-                    description: description,
-                    due_date: dueDate || null,
-                    is_completed: isCompleted,
-                    is_minimized: isMinimized,
-                    planned_hours: plannedHours || null,
-                    display_order: index,
-                    subtasks: subtasks
-                };
-                items.push(itemObject);
-            }
-        });
-        if (container.classList.contains('task-list')) {
-            const rootCard = container.querySelector(':scope > .card');
-            if (rootCard) {
-                const subtaskList = rootCard.querySelector('.subtask-list');
-                if (subtaskList) {
-                    return collectTaskData(subtaskList);
-                }
-            }
-            return [];
+            const itemObject = {
+                item_id: itemId,
+                parent_item_id: parentItemId,
+                name: name,
+                description: description,
+                due_date: dueDate || null,
+                is_completed: isCompleted,
+                is_minimized: isMinimized,
+                planned_hours: plannedHours || null,
+                display_order: index,
+                subtasks: subtasks
+            };
+            items.push(itemObject);
         }
-        return items;
+    });
+    // The function now only has one return path.
+    return items;
     }
 
     async function handleFormSubmit(event) {
@@ -110,14 +105,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // --- Original save logic will only run if the data is valid ---
+        // --- save logic  ---
         const projectId = document.getElementById('project_id').value;
-        const tasksData = collectTaskData(document.querySelector('.task-list'));
+
+        // This is the actual starting point for the tasks we want to save.
+        const startContainer = document.querySelector('.card[data-level="0"] .subtask-list');
+
+        // Only collect data if the container exists.
+        const tasksData = startContainer ? collectTaskData(startContainer) : [];
+   
         const payload = {
             project_id: projectId,
             tasks: tasksData,
             deleted_item_ids: Array.from(deletedItemIds)
         };
+
+        console.log("SENDING PAYLOAD:", JSON.stringify(payload, null, 2));
 
         try {
             const response = await fetch('/save-tasks', {
@@ -142,8 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const deleteBtn = event.target.closest('.delete-task-btn');
             const toggleBtn = event.target.closest('.toggle-subtasks-btn');
             if (addBtn) handleAddSubtask(addBtn);
+            if (addBtn) updateProjectRemainingTime();
             if (deleteBtn) handleDeleteTask(deleteBtn);
+            if (deleteBtn) updateProjectRemainingTime();
             if (toggleBtn) handleMinimizeToggle(toggleBtn);
+            
         });
 
         container.addEventListener('change', function(event) {
@@ -172,40 +178,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleAddSubtask(button) {
-        const parentCard = button.closest('.card');
-        if (!parentCard) return;
-
-        const parentLevel = parseInt(parentCard.dataset.level, 10);
-        const newLevel = parentLevel + 1;
-        if (newLevel > MAX_SUBTASK_LEVEL) {
-            showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
-            return;
-        }
-        
-        const parentId = parentCard.dataset.itemId;
-        const newId = `new-${++newItemIdCounter}`;
-        const newSubtaskHtml = generateTaskHtml(newId, parentId, newLevel);
-        
-        let subtaskList = parentCard.querySelector('.subtask-list');
-        if (!subtaskList) {
-            const newSubtaskListDiv = document.createElement('div');
-            newSubtaskListDiv.className = 'subtask-list';
-            parentCard.querySelector('.card-body').appendChild(newSubtaskListDiv);
-            subtaskList = newSubtaskListDiv;
-            initSortable(subtaskList);
-        }
-
-        subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
-
-        // Trigger the parent update after adding a new subtask
-        updateParentHours(parentCard);
-        updateRemainingHours();
-
-        if (subtaskList.classList.contains('subtask-list-collapsed')) {
-            const toggleBtn = parentCard.querySelector('.toggle-subtasks-btn');
-            if (toggleBtn) handleMinimizeToggle(toggleBtn);
-        }
+    // 1. Get the parent ID directly from the button's data attribute. This is foolproof.
+    const parentId = button.dataset.parentId;
+    if (!parentId) {
+        console.error("Button is missing a data-parent-id attribute:", button);
+        return;
     }
+
+    // 2. Find the parent card using the foolproof ID.
+    // Note the use of quotes around the ID in the selector for compatibility with IDs like 'new-1'.
+    const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+    if (!parentCard) {
+        console.error("Could not find parent card with ID:", parentId);
+        return;
+    }
+
+    // 3. The rest of the logic remains the same, but is now guaranteed to work.
+    const parentLevel = parseInt(parentCard.dataset.level, 10);
+    const newLevel = parentLevel + 1;
+    if (newLevel > MAX_SUBTASK_LEVEL) {
+        showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
+        return;
+    }
+    
+    const newId = `new-${++newItemIdCounter}`;
+    const newSubtaskHtml = generateTaskHtml(newId, parentId, newLevel);
+    
+    let subtaskList = parentCard.querySelector('.subtask-list');
+    if (!subtaskList) {
+        const newSubtaskListDiv = document.createElement('div');
+        newSubtaskListDiv.className = 'subtask-list';
+        parentCard.querySelector('.card-body').appendChild(newSubtaskListDiv);
+        subtaskList = newSubtaskListDiv;
+        initSortable(subtaskList);
+    }
+
+    subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
+
+    updateParentHours(parentCard);
+    updateRemainingHours();
+
+    if (subtaskList.classList.contains('subtask-list-collapsed')) {
+        const toggleBtn = parentCard.querySelector('.toggle-subtasks-btn');
+        if (toggleBtn) handleMinimizeToggle(toggleBtn);
+    }
+}
 
     function handleDeleteTask(button) {
         const cardToDelete = button.closest('.card');
@@ -239,8 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * MODIFICATION: This function now correctly cascades minimization to ALL descendant subtasks.
-     * The selector was updated to find all nested cards, not just immediate children.
+     * This functioncascades minimization to all descendant subtasks.
      */
     function handleMinimizeToggle(button) {
         const taskCard = button.closest('.card');
@@ -275,7 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function generateTaskHtml(itemId, parentItemId, level) {
         const htmlId = itemId.replace(/[.-]/g, '_');
-        const addBtn = level < MAX_SUBTASK_LEVEL ? `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>` : '';
+        
+        // Added data-parent-id to the button, using the ID of the task it belongs to.
+        const addBtn = level < MAX_SUBTASK_LEVEL ? `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn" data-parent-id="${itemId}"><i class="fa-solid fa-plus"></i></button>` : '';
         return `
         <div class="card subtask-level-${level} mb-1" data-item-id="${itemId}" data-parent-item-id="${parentItemId}" data-level="${level}">
             <div class="card-body">
@@ -384,9 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-/**
-     * Validates that a subtask's due date is not earlier than its parent's.
-     * This version uses direct string comparison to avoid timezone issues.
+    /**
+     * Checks a subtask's due date is not earlier than its parent's.
      * @param {HTMLInputElement} dateInput The date input element that was changed.
      */
     function validateDueDate(dateInput) {
@@ -456,4 +473,79 @@ document.addEventListener('DOMContentLoaded', function() {
             updateParentHours(grandParentCard);
         }
     }
+});
+
+
+/**
+ * Calculates and updates the total planned hours for the Level 0 project task.
+ * This function should be called after all subtask hours have been updated.
+ */
+function updateProjectRemainingTime() {
+    let totalProjectHours = 0;
+    // Select all direct children of the main task-list container that are cards
+    // These should be your Level 0 tasks (though in your template, there's only one project card at level 0).
+    // Or, more accurately, sum all Level 1 tasks directly.
+    const level1Tasks = document.querySelectorAll('.task-list > .card[data-level="0"] > .card-body > .subtask-list > .card[data-level="1"]');
+
+    level1Tasks.forEach(taskCard => {
+        const plannedHoursInput = taskCard.querySelector('input[id^="planned_hours_"]');
+        if (plannedHoursInput) {
+            totalProjectHours += parseFloat(plannedHoursInput.value) || 0;
+        }
+    });
+
+    const remainingHoursDisplay = document.getElementById('remaining-hours-display');
+    if (remainingHoursDisplay) {
+        // You might need to subtract 'completed' hours here if you track them separately
+        // For now, it's just the sum of all planned hours.
+        remainingHoursDisplay.textContent = `${totalProjectHours.toFixed(1)} hrs`;
+    }
+}
+
+// Ensure this is called after your updateParentHours has finished its cascade
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing logic to trigger updateParentHours on load (important for initial sums)
+    updateProjectRemainingTime()
+    const allCardsElements = document.querySelectorAll('.card[data-item-id]');
+    const sortedCardsByLevel = Array.from(allCardsElements).sort((a, b) => {
+        const levelA = parseInt(a.dataset.level, 10);
+        const levelB = parseInt(b.dataset.level, 10);
+        return levelB - levelA; // Deepest level first
+    });
+
+    const updatedParents = new Set(); 
+
+    sortedCardsByLevel.forEach(card => {
+        const parentCard = card.closest('.subtask-list')?.closest('.card');
+        if (parentCard && !updatedParents.has(parentCard)) {
+            updateParentHours(parentCard);
+            updatedParents.add(parentCard);
+        } else if (parseInt(card.dataset.level, 10) === 0 && !updatedParents.has(card)) {
+            // Ensure the level 0 card also gets its 'subtask sum' (even if it's not displayed there)
+            // if it has subtasks, this will make its input readonly.
+            // updateParentHours(card); // You might not need to call this directly on level 0 if you are handling total project sum separately
+            // Instead, just ensure the level 1 cards are correctly summed up to their level 0 parent.
+        }
+    });
+
+    // NOW, after all individual task/subtask sums have potentially propagated upwards,
+    // calculate the total remaining time for the project.
+    updateProjectRemainingTime();
+
+    // Add event listeners for input changes
+    document.querySelectorAll('input[id^="planned_hours_"]').forEach(input => {
+        input.addEventListener('input', (event) => {
+            const changedInput = event.target;
+            const parentCard = changedInput.closest('.card');
+            
+            if (parentCard && !changedInput.readOnly) { // Only process if the field is editable (i.e., it's a leaf task)
+                const grandParentCard = parentCard.closest('.subtask-list')?.closest('.card');
+                if (grandParentCard) {
+                    updateParentHours(grandParentCard); // Cascade sum upwards
+                }
+                // After any individual task's hours change, update the project total.
+                updateProjectRemainingTime();
+            }
+        });
+    });
 });

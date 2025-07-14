@@ -79,7 +79,7 @@
 
                                         <div class="form-floating flex-grow-1 w-100">
                                             <textarea class="form-control" placeholder="Description" id="description_{{ task.item_id | replace('.', '_') }}" name="description_{{ task.item_id | replace('.', '_') }}">{{ task.description }}</textarea>
-                                            <label for="description_{{ task.item_id | replace('.', '_') }}">Description</label>
+                                            <label for="description_{{ task.item_id | replace('.', '_') }}">Hello</label>
                                         </div>
 
                                         <div class="form-check mb-2">
@@ -104,7 +104,7 @@
 
                             {% if level == 0 %}
                                 <div class="d-flex justify-content-center mt-3">
-                                    <button type="button" class="btn btn-primary add-subtask-btn px-4">
+                                    <button type="button" class="btn btn-primary add-subtask-btn px-4" data-parent-id="{{ task.item_id }}">
                                         <i class="fa-solid fa-plus me-2"></i> Add Subtask
                                     </button>
                                 </div>

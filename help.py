@@ -3,6 +3,7 @@ from flask import  g, session, redirect
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from functools import wraps
+from google_calendar import *
 
 
 def get_db():
@@ -84,63 +85,78 @@ def format_date_difference(target_date_str: str) -> str:
     if delta.days: parts.append(f"{delta.days} day{'s' if delta.days != 1 else ''}")
     return " ".join(parts) or "Today"
 
-def process_task_list(task_list, parent_db_id=None):
-            for task in task_list:
+def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
+    """
+    Recursively processes a list of tasks to save them to the database.
+    """
+    for task in task_list:
+        # Get all task properties from the payload
+        client_id = task.get("item_id")
+        name = task.get("name")
+        description = task.get("description")
+        due_date = task.get("due_date") or None
+        is_completed = 1 if task.get("is_completed", False) else 0
+        is_minimized = 1 if task.get("is_minimized", False) else 0
+        display_order = task.get("display_order", 0)
+        planned_hours = task.get("planned_hours")
+        actual_parent_id = task.get("parent_item_id")
 
-                # Get all task properties
-                client_id = task["item_id"]
-                name = task["name"]
-                description = task.get("description")
-                due_date = task.get("due_date") or None
-                is_completed = 1 if task.get("is_completed", False) else 0
-                is_minimized = 1 if task.get("is_minimized", False) else 0
-                display_order = task.get("display_order", 0)
+        if isinstance(actual_parent_id, str) and actual_parent_id.startswith("new-"):
+            actual_parent_id = id_map.get(actual_parent_id)
+        
+        current_db_id = None
 
-                current_db_id = None
+        if isinstance(client_id, str) and client_id.startswith("new-"):
+            # New tasks are inserted using the corrected parent ID.
+            cursor.execute("""
+                INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, is_minimized, display_order, planned_hours)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (project_id, actual_parent_id, name, description, due_date, is_completed, is_minimized, display_order, planned_hours))
+            
+            current_db_id = cursor.lastrowid
+            id_map[client_id] = current_db_id # Store the new real ID for any children.
 
-                if isinstance(client_id, str) and client_id.startswith("new-"):
+        elif str(client_id).isdigit():
+            # Existing tasks are updated using the corrected parent ID.
+            current_db_id = int(client_id)
+            cursor.execute("""
+                UPDATE work_items
+                SET name = ?, description = ?, due_date = ?, is_completed = ?, is_minimized = ?, display_order = ?, planned_hours = ?, parent_item_id = ?
+                WHERE item_id = ? AND project_id = ?
+            """, (name, description, due_date, is_completed, is_minimized, display_order, planned_hours, actual_parent_id, current_db_id, project_id))
+        
+        # If the task has a due date, sync it with Google Calendar.
 
-                    # new tasks are inserted.
-                    cursor.execute("""
-                        INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, is_minimized, display_order)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (project_id, parent_db_id, name, description, due_date, is_completed, is_minimized, display_order))
+        # If the task has subtasks, process them recursively.
+        if current_db_id and task.get("subtasks"):
 
-                    current_db_id = cursor.lastrowid
-                    id_map[client_id] = current_db_id
-
-                elif str(client_id).isdigit():
-
-                    # existing tasks are updated.
-                    current_db_id = int(client_id)
-                    cursor.execute("""
-                        UPDATE work_items
-                        SET name = ?, description = ?, due_date = ?, is_completed = ?, is_minimized = ?, display_order = ?, parent_item_id = ?
-                        WHERE item_id = ? AND project_id = ?
-                    """, (name, description, due_date, is_completed, is_minimized, display_order, parent_db_id, current_db_id, project_id))
+            # worried I shouldn't be putting id_map here.
+            process_task_list(task["subtasks"], cursor, id_map, project_id,current_db_id)
 
 
-                # If the task has a due date, sync it with Google Calendar.
-                if due_date:
-                    event_data = {
-                        'summary': name,
-                        'description': description or "No description provided.",
-                        'start': {
-                            'date': due_date},
-                        'end': {
-                            'date': due_date},
-                    }
-                    created_event = pushOutgoingEvents(event_data)
 
-                    # If the event was created, save its unique ID back to our
-                    # database.
-                    if created_event and current_db_id:
-                        event_id = created_event.get('id')
-                        cursor.execute(
-                            "UPDATE work_items SET google_calendar_event_id = ? WHERE item_id = ?",
-                            (event_id, current_db_id)
-                        )
+        if due_date:
+            event_data = {
+                'summary': name,
+                'description': description or "No description provided.",
+                'start': {
+                    'date': due_date},
+                'end': {
+                    'date': due_date},
+            }
+            created_event = pushOutgoingEvents(event_data)
 
-                # If the task has subtasks, process them recursively.
-                if current_db_id and task.get("subtasks"):
-                    process_task_list(task["subtasks"], current_db_id)
+            # If the event was created, save its unique ID back to our
+            # database.
+            if created_event and current_db_id:
+                event_id = created_event.get('id')
+                cursor.execute(
+                    "UPDATE work_items SET google_calendar_event_id = ? WHERE item_id = ?",
+                    (event_id, current_db_id)
+                )
+
+        # The recursive call to process subtasks remains the same
+        if current_db_id and task.get("subtasks"):
+            process_task_list(task["subtasks"], cursor, id_map, project_id, current_db_id)
+
+                
