@@ -110,7 +110,7 @@ def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
             # New tasks are inserted using the corrected parent ID.
             cursor.execute("""
                 INSERT INTO work_items (project_id, parent_item_id, name, description, due_date, is_completed, is_minimized, display_order, planned_hours)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (project_id, actual_parent_id, name, description, due_date, is_completed, is_minimized, display_order, planned_hours))
             
             current_db_id = cursor.lastrowid

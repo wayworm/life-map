@@ -3,7 +3,7 @@ body {
     background: linear-gradient(-45deg, #6a11cb, #2575fc, #ec008c, #fc6767);
     background-size: 400% 400%;
     animation: gradientBG 25s ease infinite;
-    color: #fff;
+    color: #222; /* Body text is dark grey */
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -17,7 +17,7 @@ body {
 
 .navbar {
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(4px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }
@@ -28,14 +28,17 @@ body {
     background: -webkit-linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888, #7a2c9e, #4f5bd5, #1a92d8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    /* Add subtle text-shadow for better visibility of the gradient text */
 }
 
 .nav-link {
-    color: #fff !important;
+    color: #fff !important; /* These are explicitly white */
     font-weight: 600;
     transition: all 0.3s ease;
     padding: 1rem 1.5rem !important;
     border-radius: 50px;
+    /* Add subtle text-shadow for better visibility of white text */
+    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); /* Soft black glow */
 }
 
 .nav-link:hover {
@@ -53,6 +56,8 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
     animation: fadeInDown 1s ease-in-out, fadeOut 1s ease-in-out 4s forwards;
+    /* Add subtle text-shadow for flash messages too */
+    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); /* Soft black glow */
 }
 
 @keyframes fadeInDown {
@@ -91,6 +96,9 @@ body {
 
 footer {
     background: rgba(0, 0, 0, 0.2);
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.7); /* Footer text is slightly less white */
 }
 
+.username{
+        text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); /* Soft black glow */
+}

@@ -5,15 +5,17 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from google_calendar import *
 from help import *
 
+# IMPORTANT
 # TODO: Link to Google Calendar.
+# TODO: Add thick black outline to navbar text items, so they are distinguished from background.
 # TODO: fix depreciated line: "now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time "
 # TODO: fix the "Description" text going over the input.
-# TODO: Fix the broken task saving function... 2 steps back...
-# TODO: Add think black outline to navbar text items, so they are distinguished from background.
+
+# NICE TO HAVE
+
 # TODO: Let text area for a task grow and push everything below it downward.
-# TODO: Add a line connecting the parent task to all its children. e.g. :
 # TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
-# TODO: BUGFIX: WHen adding new tasks to a project, the top level task does not get assigned the correct parent ID.
+# TODO: Add a line connecting the parent task to all its children. e.g. :
 # parent 
 #      |
 #      L Child 1
@@ -21,6 +23,14 @@ from help import *
 #      |     L Child 1's child
 #      |
 #      L Child 2
+
+
+# DID IT:
+#   DONE: BUGFIX: When adding new tasks to a project, the top level task does not get assigned the correct parent ID.
+#   DONE: Fix the broken task saving function...
+#   DONE: added new test user
+
+
 
 
 # Configure application
@@ -372,6 +382,83 @@ def tasks(project_id):
         project_name=project_name,
         username=get_username(user_id),
         project_details=project_details)
+
+
+@app.route("/projects/<int:project_id>/delete", methods=["POST"])
+@login_required
+def delete_project(project_id):
+    """Deletes a project and all its associated work items."""
+    user_id = session["user_id"]
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+
+        # Verify the project belongs to the current user
+        cursor.execute("SELECT user_id FROM projects WHERE project_id = ?", (project_id,))
+        project_owner = cursor.fetchone()
+
+        if not project_owner or project_owner['user_id'] != user_id:
+            # If project doesn't exist or doesn't belong to the user, rollback and redirect
+            conn.execute("ROLLBACK;")
+            flash("Unauthorized or project not found.", "error")
+            return redirect("/projects")
+
+        # Delete all data related to project
+        cursor.execute("DELETE FROM work_items WHERE project_id = ?", (project_id,))
+        cursor.execute("DELETE FROM projects WHERE project_id = ?", (project_id,))
+
+        # Commit the transaction if both deletions were successful
+        conn.commit()
+        flash("Project deleted!", "success")
+        return redirect("/projects") # Redirect to the projects list
+
+    except sqlite3.Error as e:
+
+        # Rollback in case of any database error
+        conn.execute("ROLLBACK;")
+        print(f"Database error during project deletion: {e}")
+        flash("An error occurred while deleting the project. Please try again.", "error")
+        return redirect(f"/projects/{project_id}/edit") # Redirect back to edit page with error
+
+    finally:
+        pass
+
+@app.route("/calendar") 
+@login_required
+def calendar():
+    user_id = session["user_id"]
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Fetch tasks with due dates for the current user
+    # We select google_calendar_event_id to check if an event already exists
+    cursor.execute("""
+        SELECT name, description, due_date, google_calendar_event_id
+        FROM work_items
+        WHERE project_id IN (SELECT project_id FROM projects WHERE user_id = ?)
+        AND due_date IS NOT NULL
+        ORDER BY due_date
+    """, (user_id,))
+    
+    tasks_with_due_dates = cursor.fetchall()
+
+    events_for_calendar = []
+    for task in tasks_with_due_dates:
+        # FullCalendar expects events in a specific format.
+        # title is the event's title
+        # start is the event's start date/time
+        # end is the event's end date/time (optional, if it's an all-day event, it should be the day *after* the event)
+        # We'll use the due_date for both start and end for all-day events.
+        events_for_calendar.append({
+            'title': task['name'],
+            'start': task['due_date'],
+            'end': task['due_date'], # For all-day events, FullCalendar treats 'end' as exclusive. If your event is on '2025-07-15', setting end to '2025-07-15' will show it as one day. If you want it to span the entire day and appear on the 15th, you typically just need the 'start' date. For simplicity with "due dates" being single days, setting start and end to the same date is common for all-day events.
+            'description': task['description'],
+            'id': task['google_calendar_event_id'] # Use the Google Calendar event ID if available
+        })
+    
+    return render_template("calendar.html", events=events_for_calendar, username=get_username(user_id))
 
 
 @app.route("/projects", methods=["GET", "POST"])
