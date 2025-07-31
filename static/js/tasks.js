@@ -156,21 +156,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!displayElement) return;
 
         let totalHours = 0;
-        let completedHours = 0;
-        document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[id^="planned_hours_"]').forEach(input => {
-            const value = parseFloat(input.value);
-            if (!isNaN(value)) {
-                totalHours += value;
-                const taskCard = input.closest('.card');
-                if (taskCard && taskCard.classList.contains('completed-task')) {
-                    completedHours += value;
+        let remainingHours = 0;
+        
+        // Get all task cards on the page (levels > 0)
+        const allTaskCards = document.querySelectorAll('.card[data-level]:not([data-level="0"])');
+
+        allTaskCards.forEach(card => {
+            // A task's hours should only be counted if it's a "leaf" task (has no subtasks).
+            // The hour value in a parent task is just a sum of its children, so we MUST ignore it
+            // in this calculation to prevent double-counting.
+            const hasSubtasks = card.querySelector('.subtask-list .card');
+
+            if (!hasSubtasks) {
+                const hourInput = card.querySelector('input[id^="planned_hours_"]');
+                if (hourInput) {
+                    const value = parseFloat(hourInput.value);
+                    if (!isNaN(value)) {
+                        // Add its hours to the project's true total
+                        totalHours += value; 
+                        
+                        // If the task is NOT complete, add its hours to the remaining total
+                        if (!card.classList.contains('completed-task')) {
+                            remainingHours += value;
+                        }
+                    }
                 }
             }
         });
 
-        const remainingHours = totalHours - completedHours;
         displayElement.textContent = `${remainingHours.toFixed(1)} hrs`;
         
+        // The styling logic remains the same
         if (remainingHours <= 0 && totalHours > 0) {
             displayElement.classList.remove('text-warning');
             displayElement.classList.add('text-success');
