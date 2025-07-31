@@ -60,7 +60,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleDeleteTask(button) {
         const cardToDelete = button.closest('.card');
         if (cardToDelete) {
-            const parentCard = cardToDelete.closest('.subtask-list')?.closest('.card');
+            
+            // --- CORRECTED LOGIC STARTS HERE ---
+            const parentId = cardToDelete.dataset.parentItemId;
+            let parentCard = null;
+            if (parentId) {
+                parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+            }
+            // --- CORRECTED LOGIC ENDS HERE ---
+
             const itemId = cardToDelete.dataset.itemId;
             if (!itemId.startsWith('new-')) {
                 deletedItemIds.add(itemId);
@@ -132,9 +140,14 @@ document.addEventListener('DOMContentLoaded', function() {
             parentHourInput.readOnly = false;
         }
 
-        const grandParentCard = parentCard.closest('.subtask-list')?.closest('.card');
-        if (grandParentCard && parseInt(grandParentCard.dataset.level, 10) > 0) {
-            updateParentHours(grandParentCard);
+        // --- CORRECTED CASCADE LOGIC ---
+        const grandParentId = parentCard.dataset.parentItemId;
+        if (grandParentId) {
+            const grandParentCard = document.querySelector(`.card[data-item-id="${grandParentId}"]`);
+            // The level check is still a good safeguard here.
+            if (grandParentCard && parseInt(grandParentCard.dataset.level, 10) > 0) {
+                updateParentHours(grandParentCard);
+            }
         }
     }
 
@@ -195,10 +208,19 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
 
         let isDataValid = true;
+        // Find all date inputs in the form to validate them
         document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[type="date"]').forEach(dateInput => {
             const subtaskCard = dateInput.closest('.card');
-            const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
-            const parentDueDateInput = parentCard?.querySelector('input[type="date"]');
+            
+            // --- CORRECTED LOGIC STARTS HERE ---
+            const parentId = subtaskCard.dataset.parentItemId;
+            if (!parentId) return; // Skips to the next item in the forEach loop
+
+            const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+            if (!parentCard) return;
+            // --- CORRECTED LOGIC ENDS HERE ---
+
+            const parentDueDateInput = parentCard.querySelector('input[type="date"]');
 
             if (parentDueDateInput && parentDueDateInput.value && dateInput.value && dateInput.value > parentDueDateInput.value) {
                 const taskName = subtaskCard.querySelector('input[id^="name_"]').value || "Untitled Task";
@@ -317,10 +339,28 @@ document.addEventListener('DOMContentLoaded', function() {
             fallbackOnBody: true,
             swapThreshold: 0.65,
             onAdd: function (evt) {
-                const item = evt.item;
-                const newParentCard = item.closest('.card:not([data-item-id="' + item.dataset.itemId + '"])');
+                const item = evt.item; // The card that was moved
+                
+                // --- CORRECTED LOGIC STARTS HERE ---
+                // Find the OLD parent from which the item was dragged.
+                const oldList = evt.from;
+                const oldParentCard = oldList.closest('.card');
+
+                // Find the NEW parent where the item was dropped.
+                const newList = evt.to;
+                const newParentCard = newList.closest('.card');
+                // --- CORRECTED LOGIC ENDS HERE ---
+
                 const newParentId = newParentCard ? newParentCard.dataset.itemId : '';
                 item.dataset.parentItemId = newParentId;
+
+                // Update hours for both the old and new parents.
+                if (oldParentCard) {
+                    updateParentHours(oldParentCard);
+                }
+                if (newParentCard && newParentCard !== oldParentCard) {
+                    updateParentHours(newParentCard);
+                }
             }
         });
     }
@@ -354,14 +394,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function propagateUncompletionUpwards(currentTaskCard) {
-        let parentCard = currentTaskCard.closest('.subtask-list')?.closest('.card');
-        if (parentCard) {
-            const parentCheckbox = parentCard.querySelector('.completed-checkbox');
-            if (parentCheckbox && parentCheckbox.checked) {
-                parentCheckbox.checked = false;
-                applyCompletionStyles(parentCard, false);
-                propagateUncompletionUpwards(parentCard);
-            }
+        // --- CORRECTED LOGIC STARTS HERE ---
+        const parentId = currentTaskCard.dataset.parentItemId;
+        if (!parentId) return;
+
+        const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+        if (!parentCard) return;
+        // --- CORRECTED LOGIC ENDS HERE ---
+
+        const parentCheckbox = parentCard.querySelector('.completed-checkbox');
+        if (parentCheckbox && parentCheckbox.checked) {
+            parentCheckbox.checked = false;
+            applyCompletionStyles(parentCard, false);
+            // Continue propagating upwards recursively
+            propagateUncompletionUpwards(parentCard);
         }
     }
     
@@ -369,16 +415,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const subtaskCard = dateInput.closest('.card');
         if (!subtaskCard) return;
 
-        const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
-        const parentDueDateInput = parentCard?.querySelector('input[type="date"]');
-        if (!parentCard || !parentDueDateInput || !parentDueDateInput.value) return;
+        const parentId = subtaskCard.dataset.parentItemId;
+        if (!parentId) {
+            return;
+        }
+
+        const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+        if (!parentCard) return;
+
+        // --- CORRECTED SELECTOR ---
+        // This now only finds a date input within the parent's own task-options,
+        // and will not find one in any of its children.
+        const parentDueDateInput = parentCard.querySelector(':scope > .card-body > .task-options input[type="date"]');
+
+        // This guard clause will now work correctly, as the query above will return
+        // null for the Level 0 card, and the function will exit as intended.
+        if (!parentDueDateInput || !parentDueDateInput.value) {
+            return;
+        }
         
         const parentDueDateStr = parentDueDateInput.value;
         const subtaskDueDateStr = dateInput.value;
 
         if (subtaskDueDateStr && subtaskDueDateStr > parentDueDateStr) {
             showAlert("A subtask's due date cannot be later than its parent's due date.");
-            dateInput.value = '';
+            dateInput.value = ''; // Reset the invalid date
         }
     }
 
@@ -399,16 +460,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Run initial calculations for readonly states and sums on page load.
-    // This starts from the deepest tasks and works its way up.
     const allCards = Array.from(document.querySelectorAll('.card[data-item-id]'));
     allCards.sort((a, b) => parseInt(b.dataset.level) - parseInt(a.dataset.level));
+    
     const updatedParents = new Set();
     allCards.forEach(card => {
-        const parentCard = card.closest('.subtask-list')?.closest('.card');
-        if (parentCard && !updatedParents.has(parentCard)) {
-            updateParentHours(parentCard);
-            updatedParents.add(parentCard);
+        // --- CORRECTED LOGIC STARTS HERE ---
+        const parentId = card.dataset.parentItemId;
+        if (parentId) {
+            const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+            if (parentCard && !updatedParents.has(parentCard)) {
+                updateParentHours(parentCard);
+                updatedParents.add(parentCard);
+            }
         }
+        // --- CORRECTED LOGIC ENDS HERE ---
     });
 
     // Set the initial project time display after all calculations are done.

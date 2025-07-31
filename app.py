@@ -6,13 +6,16 @@ from google_calendar import *
 from help import *
 import logging
 import pprint
+import traceback
+from collections import defaultdict
 
 # IMPORTANT
-# TODO: fix the "Description" text going over the input.
 # TODO: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
+# TODO: Link to Google Calendar.
+# TODO: Fix subtask duplication bug.
+
 
 # NICE TO HAVE
-# TODO: Link to Google Calendar.
 # TODO: Let text area for a task grow and push everything below it downward.
 # TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
 # TODO: Add a line connecting the parent task to all its children. e.g. :
@@ -30,7 +33,8 @@ import pprint
 #   DONE: added new test user
 #   DONE: Added shadow to navbar text items, so they are distinguished from background.
 #   DONE: fix this bug: level 1 tasks' hour tracking are read only even when they have no subtasks.
-
+#   DONE: fix the "Description" text going over the input.
+#   DONE: Fix "A subtask's due date cannot be later than its parent's due date" error when same level task has later due date.
 
 
 
@@ -43,6 +47,21 @@ app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
+
+
+def task_to_dict(row):
+    return {
+        "item_id": row[0],
+        "name": row[1],
+        "description": row[2],
+        "due_date": row[3],
+        "is_completed": row[4],
+        "is_minimized": row[5],
+        "display_order": row[6],
+        "planned_hours": row[7],
+        "parent_item_id": row[8],
+        "google_calendar_event_id": row[9]
+    }
 
 def log_calls(func):
     def wrapper(*args, **kwargs):
@@ -384,14 +403,7 @@ def tasks(project_id):
 
     tree = build_task_tree(tasks_flat_list)
 
-    print("\n")
-    pprint.pprint(tree)
-    print("\n")
-
-    # for task in tree:
-    #     if task.subtask:
-    #         print("SUBTASK!!!", task.subtask, " \n\n\n\n\n" )
-
+    print("\n\n\n\n",tree,"\n\n\n\n")
 
     return render_template(
         'tasks.html',
@@ -461,6 +473,9 @@ def calendar():
     
     tasks_with_due_dates = cursor.fetchall()
 
+
+    # SELECT * FROM work_items WHERE project_id = 20 AND due_date IS NOT NULL ORDER BY due_date;
+
     events_for_calendar = []
     for task in tasks_with_due_dates:
         # FullCalendar expects events in a specific format.
@@ -515,6 +530,11 @@ def save_tasks():
         project_id = data.get("project_id")
         tasks_data = data.get("tasks", [])
         deleted_item_ids = data.get("deleted_item_ids", [])
+
+        cursor.execute(
+            "SELECT item_id, google_calendar_event_id FROM work_items WHERE project_id = ?",
+            (project_id,))
+        existing_google_events = {row['item_id']: row['google_calendar_event_id'] for row in cursor.fetchall()}
 
         # Verify the user owns the project
         cursor.execute(

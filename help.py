@@ -6,6 +6,7 @@ from functools import wraps
 from google_calendar import *
 
 
+
 def get_db():
     if 'lifemap_db' not in g:
         g.lifemap_db = sqlite3.connect("LifeMap.db")
