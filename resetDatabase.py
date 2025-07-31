@@ -1,4 +1,5 @@
-import sqlite3 
+import sqlite3
+
 
 def delete_all_records(db_path="LifeMap.db"):
     """
@@ -19,25 +20,28 @@ def delete_all_records(db_path="LifeMap.db"):
 
         for table_name_tuple in tables:
             table_name = table_name_tuple[0]
-            if table_name == "sqlite_sequence": # Skip sqlite_sequence table which manages AUTOINCREMENT
+            if (
+                table_name == "sqlite_sequence"
+            ):  # Skip sqlite_sequence table which manages AUTOINCREMENT
                 continue
-            
+
             print(f"  - Deleting from '{table_name}'...")
             cursor.execute(f"DELETE FROM {table_name};")
             print(f"    Deleted {cursor.rowcount} rows.")
 
-        conn.commit() 
+        conn.commit()
         print("All records deleted successfully from all tables.")
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         if conn:
-            conn.rollback() # Rollback changes on error
+            conn.rollback()  # Rollback changes on error
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
     finally:
         if conn:
             conn.close()
+
 
 # Specify the path to database file
 database_file = "LifeMap.db"

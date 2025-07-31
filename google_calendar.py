@@ -1,6 +1,4 @@
-import datetime
 import os.path
-import json
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -8,6 +6,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
+
 
 def _get_credentials():
     creds = None
@@ -23,6 +22,7 @@ def _get_credentials():
             token.write(creds.to_json())
     return creds
 
+
 def pushOutgoingEvents(event_data):
     try:
         creds = _get_credentials()
@@ -37,6 +37,7 @@ def pushOutgoingEvents(event_data):
         print(f"A general error occurred: {e}")
         return None
 
+
 def delete_google_event(event_id):
     """Deletes a specific event from the primary Google Calendar."""
     if not event_id:
@@ -45,8 +46,8 @@ def delete_google_event(event_id):
     try:
         creds = _get_credentials()
         service = build("calendar", "v3", credentials=creds)
-        
-        service.events().delete(calendarId='primary', eventId=event_id).execute()
+
+        service.events().delete(calendarId="primary", eventId=event_id).execute()
         print(f"Event with ID: {event_id} deleted successfully.\n")
 
     except HttpError as error:
