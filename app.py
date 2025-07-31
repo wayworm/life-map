@@ -8,7 +8,6 @@ import logging
 import pprint
 
 # IMPORTANT
-# TODO: FIGURE OUT WHY I CAN'T GENERATE SUBTASKS FROM THE FIRST TASK IN Park Run example.
 # TODO: fix the "Description" text going over the input.
 # TODO: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
 
