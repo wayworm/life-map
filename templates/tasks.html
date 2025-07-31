@@ -20,7 +20,6 @@
     <div class="username fs-6 fw-bold" style="">Hi, {{username}}.</div>
 {% endblock %}
 
-
 {% block main %}
     <div class="container-fluid mt-5">
         <form id="task-manager-form" method="POST">
@@ -51,7 +50,7 @@
                                 {% endif %}
                                 
                                 {% if level > 0 %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn"><i class="fa-solid fa-plus"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn" data-parent-id="{{ task.item_id }}"><i class="fa-solid fa-plus"></i></button>                                    
                                     <button type="button" class="btn btn-sm btn-outline-secondary toggle-subtasks-btn"><span class="collapse-icon">{% if task.is_minimized %}&#9650;{% else %}&#9660;{% endif %}</span></button>
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn"><i class="fa-solid fa-trash"></i></button>
                                 {% endif %}

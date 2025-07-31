@@ -11,9 +11,7 @@ from collections import defaultdict
 
 # IMPORTANT
 # TODO: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
-# TODO: Link to Google Calendar.
-# TODO: Fix subtask duplication bug.
-
+# TODO: Link to Google Calendar. *in progress*
 
 # NICE TO HAVE
 # TODO: Let text area for a task grow and push everything below it downward.
@@ -35,6 +33,8 @@ from collections import defaultdict
 #   DONE: fix this bug: level 1 tasks' hour tracking are read only even when they have no subtasks.
 #   DONE: fix the "Description" text going over the input.
 #   DONE: Fix "A subtask's due date cannot be later than its parent's due date" error when same level task has later due date.
+#   DONE: Fix subtask duplication bug.
+
 
 
 
@@ -534,6 +534,7 @@ def save_tasks():
         cursor.execute(
             "SELECT item_id, google_calendar_event_id FROM work_items WHERE project_id = ?",
             (project_id,))
+        
         existing_google_events = {row['item_id']: row['google_calendar_event_id'] for row in cursor.fetchall()}
 
         # Verify the user owns the project

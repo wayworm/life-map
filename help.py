@@ -129,39 +129,26 @@ def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
                 WHERE item_id = ? AND project_id = ?
             """, (name, description, due_date, is_completed, is_minimized, display_order, planned_hours, actual_parent_id, current_db_id, project_id))
         
-        # If the task has a due date, sync it with Google Calendar.
-
         # If the task has subtasks, process them recursively.
         if current_db_id and task.get("subtasks"):
+            process_task_list(task["subtasks"], cursor, id_map, project_id, current_db_id)
 
-            # worried I shouldn't be putting id_map here.
-            process_task_list(task["subtasks"], cursor, id_map, project_id,current_db_id)
-
-
-
+        # If the task has a due date, sync it with Google Calendar.
         if due_date:
             event_data = {
                 'summary': name,
                 'description': description or "No description provided.",
-                'start': {
-                    'date': due_date},
-                'end': {
-                    'date': due_date},
+                'start': {'date': due_date},
+                'end': {'date': due_date},
             }
             created_event = pushOutgoingEvents(event_data)
 
-            # If the event was created, save its unique ID back to our
-            # database.
             if created_event and current_db_id:
                 event_id = created_event.get('id')
                 cursor.execute(
                     "UPDATE work_items SET google_calendar_event_id = ? WHERE item_id = ?",
                     (event_id, current_db_id)
                 )
-
-        # The recursive call to process subtasks remains the same
-        if current_db_id and task.get("subtasks"):
-            process_task_list(task["subtasks"], cursor, id_map, project_id, current_db_id)
 
 def gap_print(a,b):
     print("\n"*b)
