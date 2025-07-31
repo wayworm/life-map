@@ -7,9 +7,8 @@ from help import *
 import logging
 
 
-# IMPORTANT
 
-# NICE TO HAVE
+# NICE TO HAVE Changes
 # TODO: Let text area for a task grow and push everything below it downward.
 # TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
 # TODO: Add a line connecting the parent task to all its children. e.g. :
