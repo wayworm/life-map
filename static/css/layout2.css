@@ -1,9 +1,12 @@
+/* CURRENTLY USED STYLE */
+/* Made use of AI for background animation and clear navbar */
+
 body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(-45deg, #6a11cb, #2575fc, #ec008c, #fc6767);
     background-size: 400% 400%;
     animation: gradientBG 25s ease infinite;
-    color: #222; /* Body text is dark grey */
+    color: #222;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -28,17 +31,16 @@ body {
     background: -webkit-linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888, #7a2c9e, #4f5bd5, #1a92d8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    /* Add subtle text-shadow for better visibility of the gradient text */
+    
 }
 
 .nav-link {
-    color: #fff !important; /* These are explicitly white */
+    color: #fff !important; 
     font-weight: 600;
     transition: all 0.3s ease;
     padding: 1rem 1.5rem !important;
     border-radius: 50px;
-    /* Add subtle text-shadow for better visibility of white text */
-    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); /* Soft black glow */
+    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); 
 }
 
 .nav-link:hover {
@@ -56,8 +58,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
     animation: fadeInDown 1s ease-in-out, fadeOut 1s ease-in-out 4s forwards;
-    /* Add subtle text-shadow for flash messages too */
-    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); /* Soft black glow */
+    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); 
 }
 
 @keyframes fadeInDown {
@@ -96,9 +97,9 @@ body {
 
 footer {
     background: rgba(0, 0, 0, 0.2);
-    color: rgba(255, 255, 255, 0.7); /* Footer text is slightly less white */
+    color: rgba(255, 255, 255, 0.7); 
 }
 
 .username{
-        text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); /* Soft black glow */
+        text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7); 
 }

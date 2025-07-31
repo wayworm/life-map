@@ -16,7 +16,7 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* --- Sidebar / Navigation --- */
+
 .sidebar {
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(12px);
@@ -72,12 +72,11 @@ body {
 }
 
 .user-info {
-    margin-top: auto; /* Pushes this block to the bottom */
+    margin-top: auto;
     padding-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* --- Main Content Area --- */
 .main-content {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
@@ -90,10 +89,9 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 20px;
     padding: 2rem;
-    min-height: calc(100% - 6rem); /* Adjust based on footer height */
+    min-height: calc(100% - 6rem);
 }
 
-/* --- Flash Messages --- */
 .flash-message {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
@@ -113,14 +111,12 @@ body {
     to { opacity: 0; transform: translateY(-30px); }
 }
 
-/* --- Footer --- */
 .footer {
     text-align: center;
     padding-top: 2rem;
     color: rgba(255, 255, 255, 0.5);
 }
 
-/* --- Responsive Design --- */
 @media (max-width: 991.98px) {
     body {
         flex-direction: column;
@@ -140,7 +136,7 @@ body {
         font-size: 1.8rem;
     }
     .sidebar .nav-pills, .user-info {
-        display: none; /* Hide main nav and user info for a mobile toggler */
+        display: none; 
     }
     .mobile-toggler {
         display: block !important;
@@ -154,5 +150,4 @@ body {
         padding: 1rem;
     }
     .content-wrapper { padding: 1rem; }
-    /* This is a placeholder for a mobile menu. A real implementation would use JS to toggle a dropdown/offcanvas */
 }

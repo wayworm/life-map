@@ -21,9 +21,6 @@
       document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
 
-        // THE FIX: Use the `tojson` filter to safely convert the Python list 
-        // from Flask into a valid JavaScript array of objects.
-        // This avoids all JSON.parse() errors.
         var eventsData = {{ events | tojson | safe }};
 
         var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -35,21 +32,18 @@
           },
           initialView: 'dayGridMonth',
           navLinks: true,
-          dayMaxEvents: true, // allow "more" link when too many events
-          
-          // Provide the events data variable
-          events: eventsData,
+          dayMaxEvents: true, 
+                    events: eventsData,
 
           eventColor: '#0d6efd',
           eventDidMount: function(info) {
-            // Ensure bootstrap is loaded before trying to use its components
             if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
                 new bootstrap.Popover(info.el, {
                     title: info.event.title,
                     placement: 'top',
                     trigger: 'hover',
                     content: info.event.start ? `Starts: ${info.event.start.toLocaleString()}` : 'No start time',
-                    container: 'body' // Attach popover to body to avoid layout issues
+                    container: 'body' 
               });
             }
           }

@@ -98,7 +98,6 @@ def format_date_difference(target_date_str: str) -> str:
     return " ".join(parts) or "Today"
 
 
-# Add `existing_google_events` to the function signature
 def process_task_list(
     task_list, cursor, id_map, project_id, existing_google_events, parent_db_id=None
 ):
@@ -106,7 +105,6 @@ def process_task_list(
     Recursively processes a list of tasks to save them to the database.
     """
     for task in task_list:
-        # Get all task properties from the payload
         client_id = task.get("item_id")
         name = task.get("name")
         description = task.get("description")
@@ -180,16 +178,11 @@ def process_task_list(
                 current_db_id,
             )
 
-        # --- NEW LOGIC TO HANDLE EVENT DELETION ---
-        # Before creating a new event, check if an old one needs to be deleted.
-        # This only applies to tasks that already exist in the database.
+
         if str(client_id).isdigit():
             old_event_id = existing_google_events.get(current_db_id)
-            # If an old event exists, we need to delete it because either the date
-            # has changed, been removed, or the title/description was updated.
             if old_event_id:
                 delete_google_event(old_event_id)
-        # --- END OF NEW LOGIC ---
 
         # If the task has a due date, create a new event.
         if due_date:
@@ -207,7 +200,6 @@ def process_task_list(
                     "UPDATE work_items SET google_calendar_event_id = ? WHERE item_id = ?",
                     (event_id, current_db_id),
                 )
-        # If the due date was removed, make sure the ID is cleared in the database.
         elif str(client_id).isdigit():
             cursor.execute(
                 "UPDATE work_items SET google_calendar_event_id = NULL WHERE item_id = ?",

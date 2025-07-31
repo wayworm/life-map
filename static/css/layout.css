@@ -4,7 +4,7 @@
         background-color: #f8f9fa;
         display: flex;
         flex-direction: column;
-        min-height: 100vh; /* Ensure full viewport height */
+        min-height: 100vh;
     }
     .text-gradient {
         color: #4f46e5; 
@@ -20,7 +20,7 @@
         100% { opacity: 0; transform: translateY(-20px); display: none;}
     }
 
-    /* Custom hover styles for nav-links not directly in Bootstrap */
+    /* Custom hover style */
     .navbar-nav .nav-link {
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
     }

@@ -63,12 +63,10 @@
 {% endblock %}
 
 {% block main %}
-    {# Main container div for the card-like appearance #}
     <div class="mb-4 shadow rounded-4 p-5 mx-auto" style="background-color: #f7f7f5 !important; max-width: 800px; width: 100%;">
 
         <form id="editProjectForm" method="POST" action="/projects/{{ project_id }}/edit">
             <div class="mb-3">
-                {# Heading for the form section, styled like the account page sections #}
                 <div class="fs-4 fw-bold mb-3">
                     <label id="edit_project_label">Edit Project Details</label>
                 </div>

@@ -204,11 +204,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return items;
     }
 
+    // Made use of Gemini for this function, helped me debug an error where the parent task was misidentified.
     async function handleFormSubmit(event) {
         event.preventDefault();
 
         let isDataValid = true;
-        // Find all date inputs in the form to validate them
         document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[type="date"]').forEach(dateInput => {
             const subtaskCard = dateInput.closest('.card');
             
@@ -218,8 +218,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
             if (!parentCard) return;
 
-            // --- THIS IS THE CORRECTED LINE ---
-            // This scoped selector prevents the query from finding inputs in child tasks.
             const parentDueDateInput = parentCard.querySelector(':scope > .card-body > .task-options input[type="date"]');
 
             if (parentDueDateInput && parentDueDateInput.value && dateInput.value && dateInput.value > parentDueDateInput.value) {
@@ -257,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Helper & Utility Functions ---
 
     function attachEventListeners(container) {
         container.addEventListener('click', function(event) {
@@ -339,22 +336,17 @@ document.addEventListener('DOMContentLoaded', function() {
             fallbackOnBody: true,
             swapThreshold: 0.65,
             onAdd: function (evt) {
-                const item = evt.item; // The card that was moved
-                
-                // --- CORRECTED LOGIC STARTS HERE ---
-                // Find the OLD parent from which the item was dragged.
+                const item = evt.item; 
+
                 const oldList = evt.from;
                 const oldParentCard = oldList.closest('.card');
 
-                // Find the NEW parent where the item was dropped.
                 const newList = evt.to;
                 const newParentCard = newList.closest('.card');
-                // --- CORRECTED LOGIC ENDS HERE ---
 
                 const newParentId = newParentCard ? newParentCard.dataset.itemId : '';
                 item.dataset.parentItemId = newParentId;
 
-                // Update hours for both the old and new parents.
                 if (oldParentCard) {
                     updateParentHours(oldParentCard);
                 }
@@ -393,20 +385,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Gemini helped generate this feature.
     function propagateUncompletionUpwards(currentTaskCard) {
-        // --- CORRECTED LOGIC STARTS HERE ---
         const parentId = currentTaskCard.dataset.parentItemId;
         if (!parentId) return;
 
         const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
         if (!parentCard) return;
-        // --- CORRECTED LOGIC ENDS HERE ---
 
         const parentCheckbox = parentCard.querySelector('.completed-checkbox');
         if (parentCheckbox && parentCheckbox.checked) {
             parentCheckbox.checked = false;
             applyCompletionStyles(parentCard, false);
-            // Continue propagating upwards recursively
             propagateUncompletionUpwards(parentCard);
         }
     }
@@ -422,14 +412,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
         if (!parentCard) return;
-
-        // --- CORRECTED SELECTOR ---
-        // This now only finds a date input within the parent's own task-options,
-        // and will not find one in any of its children.
         const parentDueDateInput = parentCard.querySelector(':scope > .card-body > .task-options input[type="date"]');
 
-        // This guard clause will now work correctly, as the query above will return
-        // null for the Level 0 card, and the function will exit as intended.
         if (!parentDueDateInput || !parentDueDateInput.value) {
             return;
         }
@@ -443,6 +427,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
+    // Used Gemini to restructure code into this section.
     // =========================================================================
     // INITIALIZATION
     // =========================================================================
@@ -465,7 +451,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const updatedParents = new Set();
     allCards.forEach(card => {
-        // --- CORRECTED LOGIC STARTS HERE ---
         const parentId = card.dataset.parentItemId;
         if (parentId) {
             const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
@@ -474,7 +459,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatedParents.add(parentCard);
             }
         }
-        // --- CORRECTED LOGIC ENDS HERE ---
     });
 
     // Set the initial project time display after all calculations are done.

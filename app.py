@@ -423,7 +423,6 @@ def delete_project(project_id):
     cursor = conn.cursor()
 
     try:
-        # Verify the project belongs to the current user
         cursor.execute(
             "SELECT user_id FROM projects WHERE project_id = ?", (project_id,)
         )
@@ -433,8 +432,7 @@ def delete_project(project_id):
             flash("Unauthorized or project not found.", "error")
             return redirect("/projects")
 
-        # --- NEW: Delete Google Calendar Events ---
-        # 1. Find all event IDs for this project's tasks before deleting them.
+
         cursor.execute(
             "SELECT google_calendar_event_id FROM work_items WHERE project_id = ? AND google_calendar_event_id IS NOT NULL",
             (project_id,),
@@ -443,22 +441,17 @@ def delete_project(project_id):
             row["google_calendar_event_id"] for row in cursor.fetchall()
         ]
 
-        # 2. Loop through the IDs and delete each event from Google Calendar.
         for event_id in event_ids_to_delete:
             try:
                 delete_google_event(event_id)
             except Exception as e:
-                # Log the error but continue, so the project still gets deleted from your app
                 print(
                     f"Warning: Failed to delete Google Calendar event {event_id}: {e}"
                 )
-        # --- END NEW LOGIC ---
 
-        # Delete all data related to project from your database
         cursor.execute("DELETE FROM work_items WHERE project_id = ?", (project_id,))
         cursor.execute("DELETE FROM projects WHERE project_id = ?", (project_id,))
 
-        # Commit the transaction
         conn.commit()
         flash("Project deleted successfully!", "success")
         return redirect("/projects")
@@ -479,8 +472,6 @@ def calendar():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Fetch tasks with due dates for the current user
-    # We select google_calendar_event_id to check if an event already exists
     cursor.execute(
         """
         SELECT name, description, due_date, google_calendar_event_id
@@ -494,14 +485,12 @@ def calendar():
 
     tasks_with_due_dates = cursor.fetchall()
 
-    # SELECT * FROM work_items WHERE project_id = 20 AND due_date IS NOT NULL ORDER BY due_date;
-
     events_for_calendar = []
     for task in tasks_with_due_dates:
         # FullCalendar expects events in a specific format.
         # title is the event's title
         # start is the event's start date/time
-        # end is the event's end date/time (optional, if it's an all-day event, it should be the day *after* the event)
+        # end is the event's end date/time 
         # We'll use the due_date for both start and end for all-day events.
         events_for_calendar.append(
             {
@@ -509,7 +498,7 @@ def calendar():
                 "start": task["due_date"],
                 "end": task[
                     "due_date"
-                ],  # For all-day events, FullCalendar treats 'end' as exclusive. If your event is on '2025-07-15', setting end to '2025-07-15' will show it as one day. If you want it to span the entire day and appear on the 15th, you typically just need the 'start' date. For simplicity with "due dates" being single days, setting start and end to the same date is common for all-day events.
+                ],  
                 "description": task["description"],
                 "id": task[
                     "google_calendar_event_id"
@@ -569,7 +558,6 @@ def save_tasks():
             row["item_id"]: row["google_calendar_event_id"] for row in cursor.fetchall()
         }
 
-        # Verify the user owns the project
         cursor.execute(
             "SELECT 1 FROM projects WHERE user_id = ? AND project_id = ?",
             (user_id, project_id),
@@ -577,7 +565,6 @@ def save_tasks():
         if not cursor.fetchone():
             return jsonify({"error": "Project not found or not owned by user."}), 403
 
-        # Handle any tasks marked for deletion
         if deleted_item_ids:
             clean_ids = [int(i) for i in deleted_item_ids if str(i).isdigit()]
             if clean_ids:
@@ -593,13 +580,11 @@ def save_tasks():
                     if item["google_calendar_event_id"]:
                         delete_google_event(item["google_calendar_event_id"])
 
-                # Finally, delete the tasks from the database
                 cursor.execute(
                     f"DELETE FROM work_items WHERE item_id IN ({placeholders}) AND project_id = ?",
                     clean_ids + [project_id],
                 )
 
-        # Define the recursive function to process all incoming tasks
         id_map = {}
 
         # Start the process with the top-level tasks from the request
