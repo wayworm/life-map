@@ -212,15 +212,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[type="date"]').forEach(dateInput => {
             const subtaskCard = dateInput.closest('.card');
             
-            // --- CORRECTED LOGIC STARTS HERE ---
             const parentId = subtaskCard.dataset.parentItemId;
-            if (!parentId) return; // Skips to the next item in the forEach loop
+            if (!parentId) return; 
 
             const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
             if (!parentCard) return;
-            // --- CORRECTED LOGIC ENDS HERE ---
 
-            const parentDueDateInput = parentCard.querySelector('input[type="date"]');
+            // --- THIS IS THE CORRECTED LINE ---
+            // This scoped selector prevents the query from finding inputs in child tasks.
+            const parentDueDateInput = parentCard.querySelector(':scope > .card-body > .task-options input[type="date"]');
 
             if (parentDueDateInput && parentDueDateInput.value && dateInput.value && dateInput.value > parentDueDateInput.value) {
                 const taskName = subtaskCard.querySelector('input[id^="name_"]').value || "Untitled Task";
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        if (!isDataValid) return;
+        if (!isDataValid) return;   
 
         const startContainer = document.querySelector('.card[data-level="0"] .subtask-list');
         const payload = {

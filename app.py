@@ -10,8 +10,8 @@ import traceback
 from collections import defaultdict
 
 # IMPORTANT
-# TODO: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
 # TODO: Link to Google Calendar. *in progress*
+# TODO: Delete all related google events when deleting a project.
 
 # NICE TO HAVE
 # TODO: Let text area for a task grow and push everything below it downward.
@@ -34,6 +34,7 @@ from collections import defaultdict
 #   DONE: fix the "Description" text going over the input.
 #   DONE: Fix "A subtask's due date cannot be later than its parent's due date" error when same level task has later due date.
 #   DONE: Fix subtask duplication bug.
+#   DONE: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
 
 
 
@@ -403,8 +404,6 @@ def tasks(project_id):
 
     tree = build_task_tree(tasks_flat_list)
 
-    print("\n\n\n\n",tree,"\n\n\n\n")
-
     return render_template(
         'tasks.html',
         tasks=tree,
@@ -570,7 +569,7 @@ def save_tasks():
         id_map = {}
 
         # Start the process with the top-level tasks from the request
-        process_task_list(tasks_data, cursor, id_map, project_id)
+        process_task_list(tasks_data, cursor, id_map, project_id, existing_google_events)
 
         conn.commit()
         return jsonify({"message": "Tasks saved successfully!",

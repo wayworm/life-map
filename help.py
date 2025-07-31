@@ -89,7 +89,8 @@ def format_date_difference(target_date_str: str) -> str:
     if delta.days: parts.append(f"{delta.days} day{'s' if delta.days != 1 else ''}")
     return " ".join(parts) or "Today"
 
-def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
+# Add `existing_google_events` to the function signature
+def process_task_list(task_list, cursor, id_map, project_id, existing_google_events, parent_db_id=None):
     """
     Recursively processes a list of tasks to save them to the database.
     """
@@ -118,7 +119,7 @@ def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
             """, (project_id, actual_parent_id, name, description, due_date, is_completed, is_minimized, display_order, planned_hours))
             
             current_db_id = cursor.lastrowid
-            id_map[client_id] = current_db_id # Store the new real ID for any children.
+            id_map[client_id] = current_db_id
 
         elif str(client_id).isdigit():
             # Existing tasks are updated using the corrected parent ID.
@@ -131,9 +132,21 @@ def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
         
         # If the task has subtasks, process them recursively.
         if current_db_id and task.get("subtasks"):
-            process_task_list(task["subtasks"], cursor, id_map, project_id, current_db_id)
+            # Pass the existing_google_events dictionary down to the recursion
+            process_task_list(task["subtasks"], cursor, id_map, project_id, existing_google_events, current_db_id)
 
-        # If the task has a due date, sync it with Google Calendar.
+        # --- NEW LOGIC TO HANDLE EVENT DELETION ---
+        # Before creating a new event, check if an old one needs to be deleted.
+        # This only applies to tasks that already exist in the database.
+        if str(client_id).isdigit():
+            old_event_id = existing_google_events.get(current_db_id)
+            # If an old event exists, we need to delete it because either the date
+            # has changed, been removed, or the title/description was updated.
+            if old_event_id:
+                delete_google_event(old_event_id)
+        # --- END OF NEW LOGIC ---
+
+        # If the task has a due date, create a new event.
         if due_date:
             event_data = {
                 'summary': name,
@@ -149,6 +162,12 @@ def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
                     "UPDATE work_items SET google_calendar_event_id = ? WHERE item_id = ?",
                     (event_id, current_db_id)
                 )
+        # If the due date was removed, make sure the ID is cleared in the database.
+        elif str(client_id).isdigit():
+             cursor.execute(
+                "UPDATE work_items SET google_calendar_event_id = NULL WHERE item_id = ?",
+                (current_db_id,)
+            )
 
 def gap_print(a,b):
     print("\n"*b)
