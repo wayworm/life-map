@@ -4,15 +4,22 @@ import traceback
 from werkzeug.security import check_password_hash, generate_password_hash
 from google_calendar import *
 from help import *
+import logging
+import pprint
 
 # IMPORTANT
-# TODO: Link to Google Calendar.
-# TODO: Add thick black outline to navbar text items, so they are distinguished from background.
-# TODO: fix depreciated line: "now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time "
+# TODO: FIGURE OUT WHY I CAN'T GENERATE SUBTASKS FROM THE FIRST TASK IN Park Run example.
+
 # TODO: fix the "Description" text going over the input.
+
+
+
+
+# TODO: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
 
 # NICE TO HAVE
 
+# TODO: Link to Google Calendar.
 # TODO: Let text area for a task grow and push everything below it downward.
 # TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
 # TODO: Add a line connecting the parent task to all its children. e.g. :
@@ -29,6 +36,10 @@ from help import *
 #   DONE: BUGFIX: When adding new tasks to a project, the top level task does not get assigned the correct parent ID.
 #   DONE: Fix the broken task saving function...
 #   DONE: added new test user
+#   DONE: Added shadow to navbar text items, so they are distinguished from background.
+#   DONE: fix this bug: level 1 tasks' hour tracking are read only even when they have no subtasks.
+
+
 
 
 
@@ -40,6 +51,12 @@ app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
+
+def log_calls(func):
+    def wrapper(*args, **kwargs):
+        logging.info(f"Calling {func.__name__}")
+        return func(*args, **kwargs)
+    return wrapper
 
 
 def error_page(message, code=400):
@@ -375,6 +392,15 @@ def tasks(project_id):
 
     tree = build_task_tree(tasks_flat_list)
 
+    print("\n")
+    pprint.pprint(tree)
+    print("\n")
+
+    # for task in tree:
+    #     if task.subtask:
+    #         print("SUBTASK!!!", task.subtask, " \n\n\n\n\n" )
+
+
     return render_template(
         'tasks.html',
         tasks=tree,
@@ -485,6 +511,7 @@ def projects_list():
 
 @app.route("/save-tasks", methods=["POST"])
 @login_required
+@log_calls
 def save_tasks():
     user_id = session["user_id"]
     conn = get_db()

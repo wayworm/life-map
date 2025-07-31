@@ -22,6 +22,9 @@ def login_required(f):
     return decorated_function
 
 def build_task_tree(tasks_flat_list):
+    """ 
+    tasks_falt_list is a sqlite3 row object.
+    """
     task_map = {}
     for task_row in tasks_flat_list:
         task_dict = dict(task_row)
@@ -159,4 +162,7 @@ def process_task_list(task_list, cursor, id_map, project_id, parent_db_id=None):
         if current_db_id and task.get("subtasks"):
             process_task_list(task["subtasks"], cursor, id_map, project_id, current_db_id)
 
-                
+def gap_print(a,b):
+    print("\n"*b)
+    print(a)
+    print("\n"*b)

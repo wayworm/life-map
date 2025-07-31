@@ -55,10 +55,10 @@
                                         <div class="d-flex align-items-center gap-1" style="max-width: 200px;">
                                             <label for="planned_hours_{{ task.item_id | replace('.', '_') }}" class="form-label small mb-0 text-nowrap">Planned Hrs:</label>
                                             <input type="number" min="0" step="0.1" class="form-control form-control-sm flex-grow-1"
-                                                id="planned_hours_{{ task.item_id | replace('.', '_') }}"
-                                                name="planned_hours_{{ task.item_id | replace('.', '_') }}"
-                                                value="{{ task.planned_hours if task.planned_hours is not none else '' }}"
-                                                placeholder="0.0" {% if task.subtasks %}readonly{% endif %}>
+                                                   id="planned_hours_{{ task.item_id | replace('.', '_') }}"
+                                                   name="planned_hours_{{ task.item_id | replace('.', '_') }}"
+                                                   value="{{ task.planned_hours if task.planned_hours is not none else '' }}"
+                                                   placeholder="0.0" {% if task.subtasks|length > 0 %}readonly{% endif %}>
                                         </div>
 
                                         {% if task.due_date is defined %}
@@ -68,7 +68,7 @@
                                         </div>
                                         {% endif %}
                                         
-                                        {% if task.subtasks %}
+                                        {% if task.subtasks|length > 0 %}
                                         <div class="text-end ms-auto">
                                             <strong class="text-muted">Subtask Sum:</strong>
                                             <span class="fs-6 fw-bold text-info">
@@ -94,7 +94,7 @@
                                 </div>
                             {% endif %}
                             
-                            {% if task.subtasks %}
+                            {% if task.subtasks|length > 0 %}
                             <div class="subtask-list">
                                 {% for subtask in task.subtasks %}
                                     {{ render_task_item(subtask, level + 1) }}
@@ -130,4 +130,4 @@
     
     <script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
 
-{% endblock %}
+{% endblock %}  

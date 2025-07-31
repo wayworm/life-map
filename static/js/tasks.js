@@ -163,66 +163,73 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         container.addEventListener('input', function(event) {
-            if (event.target.matches('input[id^="planned_hours_"]')) {
-                updateRemainingHours();
-            }
-        });
+        if (event.target.matches('input[id^="planned_hours_"]')) {
+            // Find the card that is the direct parent of the task being edited.
+            const parentCard = event.target.closest('.subtask-list')?.closest('.card');
 
-        container.addEventListener('input', function(event) {
-            if (event.target.matches('input[id^="planned_hours_"]')) {
-                const parentCard = event.target.closest('.subtask-list')?.closest('.card');
-                updateParentHours(parentCard); // Trigger the new summation logic
-                updateRemainingHours();      // Update the project-wide total
-            }   
-        });
+            // --- THIS IS THE CORRECTED LOGIC ---
+            // Only call the update function if the parent is an actual task (level > 0).
+            // This prevents calling the function on the Level-0 card.
+            if (parentCard && parseInt(parentCard.dataset.level, 10) > 0) {
+                updateParentHours(parentCard);
+            }
+
+            // Always update the project's total time display.
+            updateRemainingHours();
+        }
+    });
     }
 
     function handleAddSubtask(button) {
-    // 1. Get the parent ID directly from the button's data attribute. This is foolproof.
-    const parentId = button.dataset.parentId;
-    if (!parentId) {
-        console.error("Button is missing a data-parent-id attribute:", button);
-        return;
-    }
+        const parentId = button.dataset.parentId;
+        if (!parentId) {
+            console.error("Button is missing a data-parent-id attribute:", button);
+            return;
+        }
 
-    // 2. Find the parent card using the foolproof ID.
-    // Note the use of quotes around the ID in the selector for compatibility with IDs like 'new-1'.
-    const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
-    if (!parentCard) {
-        console.error("Could not find parent card with ID:", parentId);
-        return;
-    }
+        const parentCard = document.querySelector(`.card[data-item-id="${parentId}"]`);
+        if (!parentCard) {
+            console.error("Could not find parent card with ID:", parentId);
+            return;
+        }
 
-    // 3. The rest of the logic remains the same, but is now guaranteed to work.
-    const parentLevel = parseInt(parentCard.dataset.level, 10);
-    const newLevel = parentLevel + 1;
-    if (newLevel > MAX_SUBTASK_LEVEL) {
-        showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
-        return;
-    }
-    
-    const newId = `new-${++newItemIdCounter}`;
-    const newSubtaskHtml = generateTaskHtml(newId, parentId, newLevel);
-    
-    let subtaskList = parentCard.querySelector('.subtask-list');
-    if (!subtaskList) {
-        const newSubtaskListDiv = document.createElement('div');
-        newSubtaskListDiv.className = 'subtask-list';
-        parentCard.querySelector('.card-body').appendChild(newSubtaskListDiv);
-        subtaskList = newSubtaskListDiv;
-        initSortable(subtaskList);
-    }
+        const parentLevel = parseInt(parentCard.dataset.level, 10);
+        const newLevel = parentLevel + 1;
+        if (newLevel > MAX_SUBTASK_LEVEL) {
+            showAlert(`You can only create up to ${MAX_SUBTASK_LEVEL} levels of subtasks.`);
+            return;
+        }
+        
+        const newId = `new-${++newItemIdCounter}`;
+        const newSubtaskHtml = generateTaskHtml(newId, parentId, newLevel);
+        
+        let subtaskList = parentCard.querySelector('.subtask-list');
+        if (!subtaskList) {
+            const newSubtaskListDiv = document.createElement('div');
+            newSubtaskListDiv.className = 'subtask-list';
+            parentCard.querySelector('.card-body').appendChild(newSubtaskListDiv);
+            subtaskList = newSubtaskListDiv;
+            initSortable(subtaskList);
+        }
 
-    subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
+        subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
 
-    updateParentHours(parentCard);
-    updateRemainingHours();
+        // --- FINAL FIX STARTS HERE ---
+        // Only call updateParentHours if the parent is an actual task (level > 0).
+        // This prevents the buggy interaction with the main project card (level 0).
+        if (parentLevel > 0) {
+            updateParentHours(parentCard);
+        }
+        // --- FINAL FIX ENDS HERE ---
 
-    if (subtaskList.classList.contains('subtask-list-collapsed')) {
-        const toggleBtn = parentCard.querySelector('.toggle-subtasks-btn');
-        if (toggleBtn) handleMinimizeToggle(toggleBtn);
+        // This function updates the project-wide total and is always needed.
+        updateRemainingHours();
+
+        if (subtaskList.classList.contains('subtask-list-collapsed')) {
+            const toggleBtn = parentCard.querySelector('.toggle-subtasks-btn');
+            if (toggleBtn) handleMinimizeToggle(toggleBtn);
+        }
     }
-}
 
     function handleDeleteTask(button) {
         const cardToDelete = button.closest('.card');
@@ -435,6 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
     /**
      * Calculates the sum of all direct subtasks' hours and updates the parent task.
      * This function is designed to be called recursively to cascade up the hierarchy.
@@ -443,13 +451,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateParentHours(parentCard) {
         if (!parentCard) return;
 
+        // This function should not run on the Level 0 card, which has no hour input.
         const parentHourInput = parentCard.querySelector('input[id^="planned_hours_"]');
         if (!parentHourInput) return;
 
         let totalSubtaskHours = 0;
         const subtaskList = parentCard.querySelector(':scope > .card-body > .subtask-list');
 
-        if (subtaskList && subtaskList.hasChildNodes()) {
+        const hasSubtasks = subtaskList && subtaskList.querySelector(':scope > .card');
+
+        if (hasSubtasks) {
             const directSubtasks = subtaskList.querySelectorAll(':scope > .card');
             directSubtasks.forEach(subtask => {
                 const subtaskHourInput = subtask.querySelector('input[id^="planned_hours_"]');
@@ -458,21 +469,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Parent's hours are the sum of its children's hours
             parentHourInput.value = totalSubtaskHours.toFixed(1);
-            parentHourInput.readOnly = true; // Ensure it's read-only
+            parentHourInput.readOnly = true;
         } else {
-            // If there are no subtasks, the field should be editable
             parentHourInput.readOnly = false;
         }
 
-        // --- Cascade Upwards ---
-        // Find the grandparent and trigger its update
+        // --- CORRECTED CASCADE LOGIC ---
         const grandParentCard = parentCard.closest('.subtask-list')?.closest('.card');
-        if (grandParentCard) {
+
+        // Only cascade upwards if the grandparent is a real task (level > 0).
+        // This is the key fix that prevents the bug.
+        if (grandParentCard && parseInt(grandParentCard.dataset.level, 10) > 0) {
             updateParentHours(grandParentCard);
         }
     }
+
 });
 
 
