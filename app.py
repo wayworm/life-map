@@ -10,8 +10,6 @@ import traceback
 from collections import defaultdict
 
 # IMPORTANT
-# TODO: Link to Google Calendar. *in progress*
-# TODO: Delete all related google events when deleting a project.
 
 # NICE TO HAVE
 # TODO: Let text area for a task grow and push everything below it downward.
@@ -35,6 +33,9 @@ from collections import defaultdict
 #   DONE: Fix "A subtask's due date cannot be later than its parent's due date" error when same level task has later due date.
 #   DONE: Fix subtask duplication bug.
 #   DONE: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
+#   DONE: Link to Google Calendar.
+#   DONE: Delete all related google events when deleting a project.
+
 
 
 
@@ -416,42 +417,51 @@ def tasks(project_id):
 @app.route("/projects/<int:project_id>/delete", methods=["POST"])
 @login_required
 def delete_project(project_id):
-    """Deletes a project and all its associated work items."""
+    """Deletes a project and all its associated work items and Google Calendar events."""
     user_id = session["user_id"]
     conn = get_db()
     cursor = conn.cursor()
 
     try:
-
         # Verify the project belongs to the current user
         cursor.execute("SELECT user_id FROM projects WHERE project_id = ?", (project_id,))
         project_owner = cursor.fetchone()
 
         if not project_owner or project_owner['user_id'] != user_id:
-            # If project doesn't exist or doesn't belong to the user, rollback and redirect
-            conn.execute("ROLLBACK;")
             flash("Unauthorized or project not found.", "error")
             return redirect("/projects")
 
-        # Delete all data related to project
+        # --- NEW: Delete Google Calendar Events ---
+        # 1. Find all event IDs for this project's tasks before deleting them.
+        cursor.execute(
+            "SELECT google_calendar_event_id FROM work_items WHERE project_id = ? AND google_calendar_event_id IS NOT NULL",
+            (project_id,)
+        )
+        event_ids_to_delete = [row['google_calendar_event_id'] for row in cursor.fetchall()]
+
+        # 2. Loop through the IDs and delete each event from Google Calendar.
+        for event_id in event_ids_to_delete:
+            try:
+                delete_google_event(event_id)
+            except Exception as e:
+                # Log the error but continue, so the project still gets deleted from your app
+                print(f"Warning: Failed to delete Google Calendar event {event_id}: {e}")
+        # --- END NEW LOGIC ---
+
+        # Delete all data related to project from your database
         cursor.execute("DELETE FROM work_items WHERE project_id = ?", (project_id,))
         cursor.execute("DELETE FROM projects WHERE project_id = ?", (project_id,))
 
-        # Commit the transaction if both deletions were successful
+        # Commit the transaction
         conn.commit()
-        flash("Project deleted!", "success")
-        return redirect("/projects") # Redirect to the projects list
+        flash("Project deleted successfully!", "success")
+        return redirect("/projects")
 
     except sqlite3.Error as e:
-
-        # Rollback in case of any database error
-        conn.execute("ROLLBACK;")
+        conn.rollback()
         print(f"Database error during project deletion: {e}")
         flash("An error occurred while deleting the project. Please try again.", "error")
-        return redirect(f"/projects/{project_id}/edit") # Redirect back to edit page with error
-
-    finally:
-        pass
+        return redirect(f"/projects/{project_id}/edit")
 
 @app.route("/calendar") 
 @login_required
