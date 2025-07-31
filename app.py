@@ -9,16 +9,10 @@ import pprint
 
 # IMPORTANT
 # TODO: FIGURE OUT WHY I CAN'T GENERATE SUBTASKS FROM THE FIRST TASK IN Park Run example.
-
 # TODO: fix the "Description" text going over the input.
-
-
-
-
 # TODO: fix bug: When changing the due date of a task, the original google calendar task is not deleted.
 
 # NICE TO HAVE
-
 # TODO: Link to Google Calendar.
 # TODO: Let text area for a task grow and push everything below it downward.
 # TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
@@ -30,7 +24,6 @@ import pprint
 #      |     L Child 1's child
 #      |
 #      L Child 2
-
 
 # DID IT:
 #   DONE: BUGFIX: When adding new tasks to a project, the top level task does not get assigned the correct parent ID.

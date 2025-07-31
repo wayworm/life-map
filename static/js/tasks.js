@@ -1,184 +1,17 @@
-
 document.addEventListener('DOMContentLoaded', function() {
+
+    // =========================================================================
+    // STATE VARIABLES
+    // =========================================================================
     let newItemIdCounter = 0;
     const deletedItemIds = new Set();
     const MAX_SUBTASK_LEVEL = 6;
 
-    attachEventListeners(document);
+    // =========================================================================
+    // FUNCTION DEFINITIONS
+    // =========================================================================
 
-    document.querySelectorAll('.completed-checkbox').forEach(checkbox => {
-        const taskCard = checkbox.closest('.card');
-        if (taskCard && checkbox.checked) {
-            applyCompletionStyles(taskCard, true);
-        }
-    });
-
-    document.querySelectorAll('.task-list, .subtask-list').forEach(initSortable);
-    
-    const taskManagerForm = document.getElementById('task-manager-form');
-    taskManagerForm.addEventListener('submit', handleFormSubmit);
-    
-    updateRemainingHours();
-
-    function initSortable(listEl) {
-        new Sortable(listEl, {
-            group: 'nested-tasks',
-            animation: 150,
-            handle: '.drag-handle',
-            fallbackOnBody: true,
-            swapThreshold: 0.65,
-            onAdd: function (evt) {
-                const item = evt.item;
-                const newParentCard = item.closest('.card:not([data-item-id="' + item.dataset.itemId + '"])');
-                const newParentId = newParentCard ? newParentCard.dataset.itemId : '';
-                item.dataset.parentItemId = newParentId;
-            }
-        });
-    }
-
-    function collectTaskData(container) {
-    const items = [];
-    container.querySelectorAll(':scope > .card').forEach((card, index) => {
-        // The level check is now implicitly handled by where we start the call.
-        // But keeping it adds robustness in case the root card is ever passed in.
-        const level = parseInt(card.dataset.level, 10);
-        if (level > 0) {
-            const itemId = card.dataset.itemId;
-            // This is the critical line that needs the correct context
-            const parentItemId = card.dataset.parentItemId || null; 
-
-            const name = card.querySelector(`input[id^="name_"]`).value;
-            const description = card.querySelector(`textarea[id^="description_"]`).value;
-            const dueDate = card.querySelector(`input[id^="due_date_"]`).value;
-            const isCompleted = card.querySelector(`input[id^="is_completed_"]`).checked;
-            const plannedHours = card.querySelector(`input[id^="planned_hours_"]`).value;
-            const isMinimized = card.querySelector('.task-options').classList.contains('task-options-minimized');
-            
-            let subtasks = [];
-            const subtaskListContainer = card.querySelector('.subtask-list');
-            if (subtaskListContainer) {
-                // The recursive call remains the same
-                subtasks = collectTaskData(subtaskListContainer);
-            }
-
-            const itemObject = {
-                item_id: itemId,
-                parent_item_id: parentItemId,
-                name: name,
-                description: description,
-                due_date: dueDate || null,
-                is_completed: isCompleted,
-                is_minimized: isMinimized,
-                planned_hours: plannedHours || null,
-                display_order: index,
-                subtasks: subtasks
-            };
-            items.push(itemObject);
-        }
-    });
-    // The function now only has one return path.
-    return items;
-    }
-
-    async function handleFormSubmit(event) {
-        event.preventDefault(); // Always prevent the default submission first
-
-        let isDataValid = true;
-        // Find all date inputs in the form to validate them
-        document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[type="date"]').forEach(dateInput => {
-            const subtaskCard = dateInput.closest('.card');
-            const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
-            const parentDueDateInput = parentCard?.querySelector('input[type="date"]');
-
-            // Check for the invalid condition: parent has a due date AND the subtask's due date is later.
-            if (parentDueDateInput && parentDueDateInput.value && dateInput.value) {
-                if (dateInput.value > parentDueDateInput.value) {
-                    const taskName = subtaskCard.querySelector('input[id^="name_"]').value || "Untitled Task";
-                    showAlert(`Validation Error: Task "${taskName}" cannot be due after its parent.`);
-                    isDataValid = false; // Mark data as invalid
-                }
-            }
-        });
-
-        // If the validation loop found any errors, STOP the submission.
-        if (!isDataValid) {
-            return;
-        }
-
-        // --- save logic  ---
-        const projectId = document.getElementById('project_id').value;
-
-        // This is the actual starting point for the tasks we want to save.
-        const startContainer = document.querySelector('.card[data-level="0"] .subtask-list');
-
-        // Only collect data if the container exists.
-        const tasksData = startContainer ? collectTaskData(startContainer) : [];
-   
-        const payload = {
-            project_id: projectId,
-            tasks: tasksData,
-            deleted_item_ids: Array.from(deletedItemIds)
-        };
-
-        console.log("SENDING PAYLOAD:", JSON.stringify(payload, null, 2));
-
-        try {
-            const response = await fetch('/save-tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                showAlert(`Failed to save tasks: ${result.error || 'Unknown error'}`);
-            }
-        } catch (error) {
-            showAlert('Error saving tasks. Please check your connection.');
-        }
-    }
-    
-    function attachEventListeners(container) {
-        container.addEventListener('click', function(event) {
-            const addBtn = event.target.closest('.add-subtask-btn');
-            const deleteBtn = event.target.closest('.delete-task-btn');
-            const toggleBtn = event.target.closest('.toggle-subtasks-btn');
-            if (addBtn) handleAddSubtask(addBtn);
-            if (addBtn) updateProjectRemainingTime();
-            if (deleteBtn) handleDeleteTask(deleteBtn);
-            if (deleteBtn) updateProjectRemainingTime();
-            if (toggleBtn) handleMinimizeToggle(toggleBtn);
-            
-        });
-
-        container.addEventListener('change', function(event) {
-            const checkbox = event.target.closest('.completed-checkbox');
-            if (checkbox) handleCompletionChange(checkbox);
-
-            // Correctly target the due date input
-            if (event.target.matches('input[type="date"]')) {
-                validateDueDate(event.target);
-            }
-        });
-
-        container.addEventListener('input', function(event) {
-        if (event.target.matches('input[id^="planned_hours_"]')) {
-            // Find the card that is the direct parent of the task being edited.
-            const parentCard = event.target.closest('.subtask-list')?.closest('.card');
-
-            // --- THIS IS THE CORRECTED LOGIC ---
-            // Only call the update function if the parent is an actual task (level > 0).
-            // This prevents calling the function on the Level-0 card.
-            if (parentCard && parseInt(parentCard.dataset.level, 10) > 0) {
-                updateParentHours(parentCard);
-            }
-
-            // Always update the project's total time display.
-            updateRemainingHours();
-        }
-    });
-    }
+    // --- Core Event Handlers & Logic ---
 
     function handleAddSubtask(button) {
         const parentId = button.dataset.parentId;
@@ -205,24 +38,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let subtaskList = parentCard.querySelector('.subtask-list');
         if (!subtaskList) {
-            const newSubtaskListDiv = document.createElement('div');
-            newSubtaskListDiv.className = 'subtask-list';
-            parentCard.querySelector('.card-body').appendChild(newSubtaskListDiv);
-            subtaskList = newSubtaskListDiv;
+            subtaskList = document.createElement('div');
+            subtaskList.className = 'subtask-list';
+            parentCard.querySelector('.card-body').appendChild(subtaskList);
             initSortable(subtaskList);
         }
 
         subtaskList.insertAdjacentHTML('beforeend', newSubtaskHtml);
 
-        // --- FINAL FIX STARTS HERE ---
-        // Only call updateParentHours if the parent is an actual task (level > 0).
-        // This prevents the buggy interaction with the main project card (level 0).
         if (parentLevel > 0) {
             updateParentHours(parentCard);
         }
-        // --- FINAL FIX ENDS HERE ---
-
-        // This function updates the project-wide total and is always needed.
         updateRemainingHours();
 
         if (subtaskList.classList.contains('subtask-list-collapsed')) {
@@ -240,12 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 deletedItemIds.add(itemId);
             }
             
-            cardToDelete.remove(); // Remove the element from the DOM
+            cardToDelete.remove();
 
             if (parentCard) {
-                updateParentHours(parentCard); // Recalculate hours for the parent
+                updateParentHours(parentCard);
             }
-            updateRemainingHours(); // Update the project-wide total
+            updateRemainingHours();
         }
     }
 
@@ -254,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!taskCard) return;
         const isCompleted = checkbox.checked;
         applyCompletionStyles(taskCard, isCompleted);
+
         if (isCompleted) {
             propagateCompletionDownwards(taskCard.querySelector('.subtask-list'), true);
         } else {
@@ -261,45 +88,189 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         updateRemainingHours();
     }
-    
-    /**
-     * This functioncascades minimization to all descendant subtasks.
-     */
+
     function handleMinimizeToggle(button) {
         const taskCard = button.closest('.card');
         const taskOptions = taskCard.querySelector(':scope > .card-body > .task-options');
         const collapseIcon = button.querySelector('.collapse-icon');
-
-        // Toggle the main task's options visibility
         taskOptions.classList.toggle('task-options-minimized');
         const isMinimized = taskOptions.classList.contains('task-options-minimized');
-
-        // Update the icon for the main task
         collapseIcon.innerHTML = isMinimized ? '&#9650;' : '&#9660;';
 
-        // When the parent is minimized, cascade the minimization to all descendants.
         if (isMinimized) {
-            // This selector finds ALL nested .card elements, ensuring the effect cascades.
-            const allDescendantSubtasks = taskCard.querySelectorAll('.subtask-list .card');
-
-            allDescendantSubtasks.forEach(subtaskCard => {
+            taskCard.querySelectorAll('.subtask-list .card').forEach(subtaskCard => {
                 const subtaskOptions = subtaskCard.querySelector(':scope > .card-body > .task-options');
+                if (subtaskOptions) subtaskOptions.classList.add('task-options-minimized');
                 const subtaskCollapseIcon = subtaskCard.querySelector('.toggle-subtasks-btn .collapse-icon');
-
-                if (subtaskOptions) {
-                    subtaskOptions.classList.add('task-options-minimized');
-                }
-                if (subtaskCollapseIcon) {
-                    subtaskCollapseIcon.innerHTML = '&#9650;';
-                }
+                if (subtaskCollapseIcon) subtaskCollapseIcon.innerHTML = '&#9650;';
             });
         }
+    }
+    
+    // --- Calculation & Update Functions ---
+
+    function updateParentHours(parentCard) {
+        if (!parentCard) return;
+
+        const parentHourInput = parentCard.querySelector(':scope > .card-body > .task-options input[id^="planned_hours_"]');
+        if (!parentHourInput) return;
+
+        let totalSubtaskHours = 0;
+        const subtaskList = parentCard.querySelector(':scope > .card-body > .subtask-list');
+        const hasSubtasks = subtaskList && subtaskList.querySelector(':scope > .card');
+
+        if (hasSubtasks) {
+            subtaskList.querySelectorAll(':scope > .card').forEach(subtask => {
+                const subtaskHourInput = subtask.querySelector('input[id^="planned_hours_"]');
+                if (subtaskHourInput) {
+                    totalSubtaskHours += parseFloat(subtaskHourInput.value) || 0;
+                }
+            });
+            parentHourInput.value = totalSubtaskHours.toFixed(1);
+            parentHourInput.readOnly = true;
+        } else {
+            parentHourInput.readOnly = false;
+        }
+
+        const grandParentCard = parentCard.closest('.subtask-list')?.closest('.card');
+        if (grandParentCard && parseInt(grandParentCard.dataset.level, 10) > 0) {
+            updateParentHours(grandParentCard);
+        }
+    }
+
+    function updateRemainingHours() {
+        const displayElement = document.getElementById('remaining-hours-display');
+        if (!displayElement) return;
+
+        let totalHours = 0;
+        let completedHours = 0;
+        document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[id^="planned_hours_"]').forEach(input => {
+            const value = parseFloat(input.value);
+            if (!isNaN(value)) {
+                totalHours += value;
+                const taskCard = input.closest('.card');
+                if (taskCard && taskCard.classList.contains('completed-task')) {
+                    completedHours += value;
+                }
+            }
+        });
+
+        const remainingHours = totalHours - completedHours;
+        displayElement.textContent = `${remainingHours.toFixed(1)} hrs`;
+        
+        if (remainingHours <= 0 && totalHours > 0) {
+            displayElement.classList.remove('text-warning');
+            displayElement.classList.add('text-success');
+        } else {
+            displayElement.classList.remove('text-success');
+            displayElement.classList.add('text-warning');
+        }
+    }
+
+    // --- Data Collection & Submission ---
+
+    function collectTaskData(container) {
+        const items = [];
+        container.querySelectorAll(':scope > .card').forEach((card, index) => {
+            if (parseInt(card.dataset.level, 10) > 0) {
+                const subtaskListContainer = card.querySelector('.subtask-list');
+                items.push({
+                    item_id: card.dataset.itemId,
+                    parent_item_id: card.dataset.parentItemId || null,
+                    name: card.querySelector(`input[id^="name_"]`).value,
+                    description: card.querySelector(`textarea[id^="description_"]`).value,
+                    due_date: card.querySelector(`input[id^="due_date_"]`).value || null,
+                    is_completed: card.querySelector(`input[id^="is_completed_"]`).checked,
+                    is_minimized: card.querySelector('.task-options').classList.contains('task-options-minimized'),
+                    planned_hours: card.querySelector(`input[id^="planned_hours_"]`).value || null,
+                    display_order: index,
+                    subtasks: subtaskListContainer ? collectTaskData(subtaskListContainer) : []
+                });
+            }
+        });
+        return items;
+    }
+
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+
+        let isDataValid = true;
+        document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[type="date"]').forEach(dateInput => {
+            const subtaskCard = dateInput.closest('.card');
+            const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
+            const parentDueDateInput = parentCard?.querySelector('input[type="date"]');
+
+            if (parentDueDateInput && parentDueDateInput.value && dateInput.value && dateInput.value > parentDueDateInput.value) {
+                const taskName = subtaskCard.querySelector('input[id^="name_"]').value || "Untitled Task";
+                showAlert(`Validation Error: Task "${taskName}" cannot be due after its parent.`);
+                isDataValid = false;
+            }
+        });
+
+        if (!isDataValid) return;
+
+        const startContainer = document.querySelector('.card[data-level="0"] .subtask-list');
+        const payload = {
+            project_id: document.getElementById('project_id').value,
+            tasks: startContainer ? collectTaskData(startContainer) : [],
+            deleted_item_ids: Array.from(deletedItemIds)
+        };
+
+        console.log("SENDING PAYLOAD:", JSON.stringify(payload, null, 2));
+
+        try {
+            const response = await fetch('/save-tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                showAlert(`Failed to save tasks: ${result.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            showAlert('Error saving tasks. Please check your connection.');
+        }
+    }
+
+    // --- Helper & Utility Functions ---
+
+    function attachEventListeners(container) {
+        container.addEventListener('click', function(event) {
+            const addBtn = event.target.closest('.add-subtask-btn');
+            if (addBtn) handleAddSubtask(addBtn);
+
+            const deleteBtn = event.target.closest('.delete-task-btn');
+            if (deleteBtn) handleDeleteTask(deleteBtn);
+
+            const toggleBtn = event.target.closest('.toggle-subtasks-btn');
+            if (toggleBtn) handleMinimizeToggle(toggleBtn);
+        });
+
+        container.addEventListener('change', function(event) {
+            if (event.target.matches('.completed-checkbox')) {
+                handleCompletionChange(event.target);
+            }
+            if (event.target.matches('input[type="date"]')) {
+                validateDueDate(event.target);
+            }
+        });
+
+        container.addEventListener('input', function(event) {
+            if (event.target.matches('input[id^="planned_hours_"]')) {
+                const parentCard = event.target.closest('.subtask-list')?.closest('.card');
+                if (parentCard && parseInt(parentCard.dataset.level, 10) > 0) {
+                    updateParentHours(parentCard);
+                }
+                updateRemainingHours();
+            }
+        });
     }
 
     function generateTaskHtml(itemId, parentItemId, level) {
         const htmlId = itemId.replace(/[.-]/g, '_');
-        
-        // Added data-parent-id to the button, using the ID of the task it belongs to.
         const addBtn = level < MAX_SUBTASK_LEVEL ? `<button type="button" class="btn btn-sm btn-outline-primary add-subtask-btn" data-parent-id="${itemId}"><i class="fa-solid fa-plus"></i></button>` : '';
         return `
         <div class="card subtask-level-${level} mb-1" data-item-id="${itemId}" data-parent-item-id="${parentItemId}" data-level="${level}">
@@ -338,31 +309,20 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
     }
 
-    function updateRemainingHours() {
-        const displayElement = document.getElementById('remaining-hours-display');
-        if (!displayElement) return;
-        let totalHours = 0;
-        let completedHours = 0;
-        const hourInputs = document.querySelectorAll('.card[data-level]:not([data-level="0"]) input[id^="planned_hours_"]');
-        hourInputs.forEach(input => {
-            const value = parseFloat(input.value);
-            if (!isNaN(value)) {
-                totalHours += value;
-                const taskCard = input.closest('.card');
-                if (taskCard && taskCard.classList.contains('completed-task')) {
-                    completedHours += value;
-                }
+    function initSortable(listEl) {
+        new Sortable(listEl, {
+            group: 'nested-tasks',
+            animation: 150,
+            handle: '.drag-handle',
+            fallbackOnBody: true,
+            swapThreshold: 0.65,
+            onAdd: function (evt) {
+                const item = evt.item;
+                const newParentCard = item.closest('.card:not([data-item-id="' + item.dataset.itemId + '"])');
+                const newParentId = newParentCard ? newParentCard.dataset.itemId : '';
+                item.dataset.parentItemId = newParentId;
             }
         });
-        const remainingHours = totalHours - completedHours;
-        displayElement.textContent = `${remainingHours.toFixed(1)}hrs`;
-        if (remainingHours <= 0 && totalHours > 0) {
-            displayElement.classList.remove('text-warning');
-            displayElement.classList.add('text-success');
-        } else {
-            displayElement.classList.remove('text-success');
-            displayElement.classList.add('text-warning');
-        }
     }
 
     function showAlert(message) {
@@ -375,11 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function applyCompletionStyles(taskCard, isCompleted) {
-        if (isCompleted) {
-            taskCard.classList.add('completed-task');
-        } else {
-            taskCard.classList.remove('completed-task');
-        }
+        taskCard.classList.toggle('completed-task', isCompleted);
     }
 
     function propagateCompletionDownwards(subtaskListContainer, isCompleted) {
@@ -408,156 +364,54 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
-    /**
-     * Checks a subtask's due date is not earlier than its parent's.
-     * @param {HTMLInputElement} dateInput The date input element that was changed.
-     */
+    
     function validateDueDate(dateInput) {
         const subtaskCard = dateInput.closest('.card');
         if (!subtaskCard) return;
 
-        // Find the parent card by navigating up the DOM tree
         const parentCard = subtaskCard.closest('.subtask-list')?.closest('.card');
-        if (!parentCard) {
-            // This subtask has no parent in the current structure, so no validation needed
-            return;
-        }
-
-        // Find the parent's due date input
-        const parentDueDateInput = parentCard.querySelector('input[type="date"]');
-        if (!parentDueDateInput || !parentDueDateInput.value) {
-            // Parent has no due date set, so we can't validate against it
-            return;
-        }
+        const parentDueDateInput = parentCard?.querySelector('input[type="date"]');
+        if (!parentCard || !parentDueDateInput || !parentDueDateInput.value) return;
         
         const parentDueDateStr = parentDueDateInput.value;
         const subtaskDueDateStr = dateInput.value;
 
-        // Only compare if the subtask has a date
         if (subtaskDueDateStr && subtaskDueDateStr > parentDueDateStr) {
             showAlert("A subtask's due date cannot be later than its parent's due date.");
-            dateInput.value = ''; // Reset the invalid date
+            dateInput.value = '';
         }
     }
 
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
 
+    // Attach all delegated event listeners to the document.
+    attachEventListeners(document);
+    document.getElementById('task-manager-form').addEventListener('submit', handleFormSubmit);
 
-    /**
-     * Calculates the sum of all direct subtasks' hours and updates the parent task.
-     * This function is designed to be called recursively to cascade up the hierarchy.
-     * @param {HTMLElement} parentCard The parent card element whose hours need updating.
-     */
-    function updateParentHours(parentCard) {
-        if (!parentCard) return;
-
-        // This function should not run on the Level 0 card, which has no hour input.
-        const parentHourInput = parentCard.querySelector('input[id^="planned_hours_"]');
-        if (!parentHourInput) return;
-
-        let totalSubtaskHours = 0;
-        const subtaskList = parentCard.querySelector(':scope > .card-body > .subtask-list');
-
-        const hasSubtasks = subtaskList && subtaskList.querySelector(':scope > .card');
-
-        if (hasSubtasks) {
-            const directSubtasks = subtaskList.querySelectorAll(':scope > .card');
-            directSubtasks.forEach(subtask => {
-                const subtaskHourInput = subtask.querySelector('input[id^="planned_hours_"]');
-                if (subtaskHourInput) {
-                    totalSubtaskHours += parseFloat(subtaskHourInput.value) || 0;
-                }
-            });
-
-            parentHourInput.value = totalSubtaskHours.toFixed(1);
-            parentHourInput.readOnly = true;
-        } else {
-            parentHourInput.readOnly = false;
-        }
-
-        // --- CORRECTED CASCADE LOGIC ---
-        const grandParentCard = parentCard.closest('.subtask-list')?.closest('.card');
-
-        // Only cascade upwards if the grandparent is a real task (level > 0).
-        // This is the key fix that prevents the bug.
-        if (grandParentCard && parseInt(grandParentCard.dataset.level, 10) > 0) {
-            updateParentHours(grandParentCard);
-        }
-    }
-
-});
-
-
-/**
- * Calculates and updates the total planned hours for the Level 0 project task.
- * This function should be called after all subtask hours have been updated.
- */
-function updateProjectRemainingTime() {
-    let totalProjectHours = 0;
-    // Select all direct children of the main task-list container that are cards
-    // These should be your Level 0 tasks (though in your template, there's only one project card at level 0).
-    // Or, more accurately, sum all Level 1 tasks directly.
-    const level1Tasks = document.querySelectorAll('.task-list > .card[data-level="0"] > .card-body > .subtask-list > .card[data-level="1"]');
-
-    level1Tasks.forEach(taskCard => {
-        const plannedHoursInput = taskCard.querySelector('input[id^="planned_hours_"]');
-        if (plannedHoursInput) {
-            totalProjectHours += parseFloat(plannedHoursInput.value) || 0;
+    // Initialize UI components for existing tasks.
+    document.querySelectorAll('.task-list, .subtask-list').forEach(initSortable);
+    document.querySelectorAll('.completed-checkbox').forEach(checkbox => {
+        if (checkbox.checked) {
+            applyCompletionStyles(checkbox.closest('.card'), true);
         }
     });
 
-    const remainingHoursDisplay = document.getElementById('remaining-hours-display');
-    if (remainingHoursDisplay) {
-        // You might need to subtract 'completed' hours here if you track them separately
-        // For now, it's just the sum of all planned hours.
-        remainingHoursDisplay.textContent = `${totalProjectHours.toFixed(1)} hrs`;
-    }
-}
-
-// Ensure this is called after your updateParentHours has finished its cascade
-document.addEventListener('DOMContentLoaded', () => {
-    // Existing logic to trigger updateParentHours on load (important for initial sums)
-    updateProjectRemainingTime()
-    const allCardsElements = document.querySelectorAll('.card[data-item-id]');
-    const sortedCardsByLevel = Array.from(allCardsElements).sort((a, b) => {
-        const levelA = parseInt(a.dataset.level, 10);
-        const levelB = parseInt(b.dataset.level, 10);
-        return levelB - levelA; // Deepest level first
-    });
-
-    const updatedParents = new Set(); 
-
-    sortedCardsByLevel.forEach(card => {
+    // Run initial calculations for readonly states and sums on page load.
+    // This starts from the deepest tasks and works its way up.
+    const allCards = Array.from(document.querySelectorAll('.card[data-item-id]'));
+    allCards.sort((a, b) => parseInt(b.dataset.level) - parseInt(a.dataset.level));
+    const updatedParents = new Set();
+    allCards.forEach(card => {
         const parentCard = card.closest('.subtask-list')?.closest('.card');
         if (parentCard && !updatedParents.has(parentCard)) {
             updateParentHours(parentCard);
             updatedParents.add(parentCard);
-        } else if (parseInt(card.dataset.level, 10) === 0 && !updatedParents.has(card)) {
-            // Ensure the level 0 card also gets its 'subtask sum' (even if it's not displayed there)
-            // if it has subtasks, this will make its input readonly.
-            // updateParentHours(card); // You might not need to call this directly on level 0 if you are handling total project sum separately
-            // Instead, just ensure the level 1 cards are correctly summed up to their level 0 parent.
         }
     });
 
-    // NOW, after all individual task/subtask sums have potentially propagated upwards,
-    // calculate the total remaining time for the project.
-    updateProjectRemainingTime();
+    // Set the initial project time display after all calculations are done.
+    updateRemainingHours();
 
-    // Add event listeners for input changes
-    document.querySelectorAll('input[id^="planned_hours_"]').forEach(input => {
-        input.addEventListener('input', (event) => {
-            const changedInput = event.target;
-            const parentCard = changedInput.closest('.card');
-            
-            if (parentCard && !changedInput.readOnly) { // Only process if the field is editable (i.e., it's a leaf task)
-                const grandParentCard = parentCard.closest('.subtask-list')?.closest('.card');
-                if (grandParentCard) {
-                    updateParentHours(grandParentCard); // Cascade sum upwards
-                }
-                // After any individual task's hours change, update the project total.
-                updateProjectRemainingTime();
-            }
-        });
-    });
 });
