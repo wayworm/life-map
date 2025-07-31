@@ -178,7 +178,6 @@ def process_task_list(
                 current_db_id,
             )
 
-
         if str(client_id).isdigit():
             old_event_id = existing_google_events.get(current_db_id)
             if old_event_id:

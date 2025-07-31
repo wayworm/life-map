@@ -7,12 +7,12 @@
 {% block style %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
 
-        <style>
+    <style>
         .form-floating > .form-control:focus ~ label,
         .form-floating > .form-control:not(:placeholder-shown) ~ label,
         .form-floating > .form-select ~ label {
         transform: scale(0.6) translateY(-0.5rem) translateX(0.15rem);
-    }
+        }
     </style>
 {% endblock %}
 

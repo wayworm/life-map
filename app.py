@@ -7,7 +7,6 @@ from help import *
 import logging
 
 
-
 # NICE TO HAVE Changes
 # TODO: Let text area for a task grow and push everything below it downward.
 # TODO: Add sort buttons next to the column headers on the projects page *maybe*. Might be a better way of doing this.
@@ -432,7 +431,6 @@ def delete_project(project_id):
             flash("Unauthorized or project not found.", "error")
             return redirect("/projects")
 
-
         cursor.execute(
             "SELECT google_calendar_event_id FROM work_items WHERE project_id = ? AND google_calendar_event_id IS NOT NULL",
             (project_id,),
@@ -490,15 +488,13 @@ def calendar():
         # FullCalendar expects events in a specific format.
         # title is the event's title
         # start is the event's start date/time
-        # end is the event's end date/time 
+        # end is the event's end date/time
         # We'll use the due_date for both start and end for all-day events.
         events_for_calendar.append(
             {
                 "title": task["name"],
                 "start": task["due_date"],
-                "end": task[
-                    "due_date"
-                ],  
+                "end": task["due_date"],
                 "description": task["description"],
                 "id": task[
                     "google_calendar_event_id"
