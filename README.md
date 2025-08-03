@@ -3,7 +3,7 @@
 
 # LifeMap: The Hierarchical Task Manager
 
-[Video Demo](https://www.youtube.com/watch?v=Wq04XyJ3bzE)
+[Video Demo](https://www.youtube.com/watch?v=c_FUCnUCZVE)
 
 ![LifeMap Projects Page](https://imgur.com/a/QiaV9wq)
 
