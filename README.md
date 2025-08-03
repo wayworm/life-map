@@ -5,7 +5,7 @@
 
 [Video Demo](https://www.youtube.com/watch?v=c_FUCnUCZVE)
 
-![LifeMap Projects Page](https://imgur.com/a/QiaV9wq)
+[LifeMap Projects Page](https://imgur.com/a/QiaV9wq)
 
 ## Core Features
 
